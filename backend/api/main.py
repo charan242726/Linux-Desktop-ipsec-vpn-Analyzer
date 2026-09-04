@@ -1,137 +1,62 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from typing import Dict, Any, Optional
 
-from backend.api.analysis_api import (
-    start_live_analysis,
-    get_analysis,
-    stream_analysis,
-)
-
-from backend.api.replay_api import router as replay_router
-from backend.api.report_api import router as report_router
-
+from backend.services.analyzer_service import AnalyzerService
 
 app = FastAPI(
-    title="AI-Powered IPsec VPN Analyzer",
-    description="AI-powered IPsec VPN protocol analysis and security assessment platform",
-    version="1.0.0",
+    title="AI-Powered IPsec VPN Analyzer API",
+    description="Backend API for predicting IPsec VPN traffic classes and evaluating security risks.",
+    version="2.0.0",
 )
 
+# Initialize Analyzer Service
+analyzer_service = AnalyzerService()
 
-# ============================================================
 # CORS
-# ============================================================
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-    	"http://localhost:5173",
-    	"http://127.0.0.1:5173",
-    	"http://localhost:5174",
-    	"http://127.0.0.1:5174",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5174",
+        "*" # Broadly allow for Vercel integration
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+class AnalyzeRequest(BaseModel):
+    session_id: str
+    ike_features: Dict[str, Any]
+    esp_features: Dict[str, Any]
+    xfrm_text: str
 
-# ============================================================
-# ROUTERS
-# ============================================================
-
-app.include_router(replay_router)
-app.include_router(report_router)
-
-
-# ============================================================
-# ROOT
-# ============================================================
+@app.post("/api/analyze")
+def analyze_session(request: AnalyzeRequest):
+    try:
+        result = analyzer_service.analyze(
+            session_id=request.session_id,
+            ike_features=request.ike_features,
+            esp_features=request.esp_features,
+            xfrm_text=request.xfrm_text
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/")
 def root():
     return {
         "name": "AI-Powered IPsec VPN Analyzer",
         "status": "running",
-        "version": "1.0.0",
+        "version": "2.0.0",
+        "model_loaded": analyzer_service.model is not None
     }
-
-
-# ============================================================
-# HEALTH CHECK
-# ============================================================
-
+    
 @app.get("/health")
 def health():
-    return {
-        "status": "healthy",
-    }
-
-
-# ============================================================
-# LIVE ANALYSIS
-# ============================================================
-
-@app.post("/api/analysis/start")
-def start_analysis():
-    return start_live_analysis()
-
-
-@app.get("/api/analysis/{analysis_id}")
-def analysis_status(analysis_id: str):
-    result = get_analysis(analysis_id)
-
-    if result is None:
-        return {
-            "error": "Analysis not found",
-            "analysis_id": analysis_id,
-        }
-
-    return result
-
-
-# ============================================================
-# LIVE ANALYSIS WEBSOCKET
-# ============================================================
-
-@app.websocket("/ws/analysis/{analysis_id}")
-async def analysis_websocket(
-    websocket: WebSocket,
-    analysis_id: str,
-):
-    await websocket.accept()
-
-    try:
-        result = get_analysis(analysis_id)
-
-        if result is None:
-            await websocket.send_json(
-                {
-                    "type": "error",
-                    "message": "Analysis not found.",
-                    "analysis_id": analysis_id,
-                }
-            )
-
-            await websocket.close()
-            return
-
-        await stream_analysis(
-            analysis_id,
-            websocket,
-        )
-
-    except WebSocketDisconnect:
-        return
-
-    except Exception as exc:
-        try:
-            await websocket.send_json(
-                {
-                    "type": "error",
-                    "message": str(exc),
-                    "analysis_id": analysis_id,
-                }
-            )
-        finally:
-            await websocket.close()
+    return {"status": "healthy"}

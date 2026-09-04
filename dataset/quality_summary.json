@@ -1,0 +1,200 @@
+{
+    "total_manifest_records": 245,
+    "successful_records": 245,
+    "failed_records": 0,
+    "usable_feature_rows": 239,
+    "coverage_by_configuration": {
+        "base": 35,
+        "transport": 35,
+        "aes128gcm": 35,
+        "aes256cbc": 35,
+        "pfsoff": 35,
+        "dhweak": 35,
+        "replayoff": 29
+    },
+    "coverage_by_traffic_class": {
+        "icmp": 35,
+        "web": 35,
+        "video": 35,
+        "voip": 35,
+        "email": 35,
+        "chat": 34,
+        "bulk": 30
+    },
+    "missing_values_by_feature": {
+        "sample_id": 0,
+        "config": 0,
+        "traffic_class": 0,
+        "rep": 0,
+        "ike_version": 3,
+        "exchange_types": 3,
+        "initiator_spi": 3,
+        "responder_spi": 3,
+        "encryption_algorithm": 3,
+        "encryption_key_length": 3,
+        "integrity_algorithm": 37,
+        "prf_algorithm": 3,
+        "dh_group": 3,
+        "esp_packet_count": 0,
+        "esp_total_bytes": 0,
+        "esp_min_packet_size": 2,
+        "esp_max_packet_size": 2,
+        "esp_mean_packet_size": 2,
+        "esp_std_packet_size": 2,
+        "esp_duration": 2,
+        "esp_mean_interarrival": 2,
+        "esp_std_interarrival": 2,
+        "forward_esp_packets": 0,
+        "reverse_esp_packets": 0,
+        "forward_esp_bytes": 0,
+        "reverse_esp_bytes": 0
+    },
+    "unique_values_by_feature": {
+        "sample_id": 239,
+        "config": 7,
+        "traffic_class": 7,
+        "rep": 5,
+        "ike_version": 1,
+        "exchange_types": 2,
+        "initiator_spi": 236,
+        "responder_spi": 236,
+        "encryption_algorithm": 2,
+        "encryption_key_length": 2,
+        "integrity_algorithm": 1,
+        "prf_algorithm": 1,
+        "dh_group": 2,
+        "esp_packet_count": 102,
+        "esp_total_bytes": 122,
+        "esp_min_packet_size": 5,
+        "esp_max_packet_size": 5,
+        "esp_mean_packet_size": 117,
+        "esp_std_packet_size": 115,
+        "esp_duration": 232,
+        "esp_mean_interarrival": 89,
+        "esp_std_interarrival": 161,
+        "forward_esp_packets": 96,
+        "reverse_esp_packets": 30,
+        "forward_esp_bytes": 105,
+        "reverse_esp_bytes": 51
+    },
+    "duplicate_counts": 0,
+    "esp_distributions_by_class": {
+        "esp_packet_count": {
+            "bulk": 57482.3,
+            "chat": 210.55882352941177,
+            "email": 6336.085714285714,
+            "icmp": 40.0,
+            "video": 4406.714285714285,
+            "voip": 214.71428571428572,
+            "web": 11632.542857142857
+        },
+        "esp_total_bytes": {
+            "bulk": 59890090.333333336,
+            "chat": 159669.0,
+            "email": 5921412.4,
+            "icmp": 6708.571428571428,
+            "video": 6555846.0,
+            "voip": 277567.14285714284,
+            "web": 11997300.857142856
+        },
+        "esp_min_packet_size": {
+            "bulk": 135.33333333333334,
+            "chat": 135.64705882352942,
+            "email": 135.64705882352942,
+            "icmp": 167.71428571428572,
+            "video": 119.05882352941177,
+            "voip": 119.14285714285714,
+            "web": 135.71428571428572
+        },
+        "esp_max_packet_size": {
+            "bulk": 1514.0,
+            "chat": 1514.0,
+            "email": 1514.0,
+            "icmp": 167.71428571428572,
+            "video": 1496.8235294117646,
+            "voip": 1496.857142857143,
+            "web": 1514.0
+        },
+        "esp_mean_packet_size": {
+            "bulk": 1042.0396666666666,
+            "chat": 758.7697058823529,
+            "email": 934.7629411764706,
+            "icmp": 167.71428571428572,
+            "video": 1487.6888235294118,
+            "voip": 1292.716857142857,
+            "web": 1031.381142857143
+        },
+        "esp_std_packet_size": {
+            "bulk": 650.6523333333333,
+            "chat": 681.0452941176471,
+            "email": 677.0617647058823,
+            "icmp": 0.0,
+            "video": 110.30823529411765,
+            "voip": 481.2137142857143,
+            "web": 653.9654285714286
+        },
+        "esp_duration": {
+            "bulk": 0.5332526666666667,
+            "chat": 15.001924676470589,
+            "email": 4.094528852941176,
+            "icmp": 19.464470571428574,
+            "video": 10.001529411764707,
+            "voip": 10.001605514285714,
+            "web": 0.10423645714285715
+        },
+        "esp_mean_interarrival": {
+            "bulk": 9.166666666666666e-06,
+            "chat": 0.07164379411764706,
+            "email": 0.0006280588235294118,
+            "icmp": 0.49908891428571434,
+            "video": 0.002205235294117647,
+            "voip": 0.04679954285714286,
+            "web": 9.028571428571428e-06
+        },
+        "esp_std_interarrival": {
+            "bulk": 0.00012793333333333332,
+            "chat": 1.0314542647058824,
+            "email": 0.024957,
+            "icmp": 0.5119907428571429,
+            "video": 0.0004574705882352941,
+            "voip": 0.0544548,
+            "web": 9.914285714285713e-06
+        },
+        "forward_esp_packets": {
+            "bulk": 19078.0,
+            "chat": 115.82352941176471,
+            "email": 2585.7714285714287,
+            "icmp": 20.0,
+            "video": 4393.114285714286,
+            "voip": 108.85714285714286,
+            "web": 3948.885714285714
+        },
+        "reverse_esp_packets": {
+            "bulk": 38404.3,
+            "chat": 94.73529411764706,
+            "email": 3750.3142857142857,
+            "icmp": 20.0,
+            "video": 13.6,
+            "voip": 105.85714285714286,
+            "web": 7683.657142857143
+        },
+        "forward_esp_bytes": {
+            "bulk": 2582406.2666666666,
+            "chat": 146482.58823529413,
+            "email": 351510.97142857144,
+            "icmp": 3354.285714285714,
+            "video": 6553709.885714286,
+            "voip": 139069.7142857143,
+            "web": 536128.9714285714
+        },
+        "reverse_esp_bytes": {
+            "bulk": 57307684.06666667,
+            "chat": 13186.411764705883,
+            "email": 5569901.428571428,
+            "icmp": 3354.285714285714,
+            "video": 2136.114285714286,
+            "voip": 138497.42857142858,
+            "web": 11461171.885714285
+        }
+    }
+}

@@ -1,0 +1,12 @@
+src 10.10.0.10 dst 10.10.0.20
+	proto esp spi 0xcf51203c reqid 1 mode tunnel
+	replay-window 0 flag af-unspec
+	aead rfc4106(gcm(aes)) 0xffb3b8b85396a4f082c6d219186a49fb424e6169 128
+	lastused 2026-09-04 18:22:17
+	anti-replay context: seq 0x0, oseq 0x74, bitmap 0x00000000
+src 10.10.0.20 dst 10.10.0.10
+	proto esp spi 0xcae120f1 reqid 1 mode tunnel
+	replay-window 32 flag af-unspec
+	aead rfc4106(gcm(aes)) 0x9e04e8328e621906ea216659efeaf75ff3cff60d 128
+	lastused 2026-09-04 18:22:17
+	anti-replay context: seq 0x61, oseq 0x0, bitmap 0xffffffff

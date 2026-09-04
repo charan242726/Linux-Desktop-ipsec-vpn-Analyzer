@@ -1,0 +1,28 @@
+src 10.10.0.10/32 dst 10.10.0.20/32 
+	dir out priority 367231 ptype main 
+	tmpl src 10.10.0.10 dst 10.10.0.20
+		proto esp spi 0xcac81482 reqid 1 mode tunnel
+src 10.10.0.20/32 dst 10.10.0.10/32 
+	dir fwd priority 367231 ptype main 
+	tmpl src 10.10.0.20 dst 10.10.0.10
+		proto esp reqid 1 mode tunnel
+src 10.10.0.20/32 dst 10.10.0.10/32 
+	dir in priority 367231 ptype main 
+	tmpl src 10.10.0.20 dst 10.10.0.10
+		proto esp reqid 1 mode tunnel
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 

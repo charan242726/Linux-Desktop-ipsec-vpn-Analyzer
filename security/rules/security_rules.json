@@ -1,0 +1,74 @@
+{
+  "rules": [
+    {
+      "id": "IPSEC-001",
+      "parameter": "ipsec_detected",
+      "condition": "false",
+      "severity": "CRITICAL",
+      "score_impact": -40,
+      "title": "IPsec not detected",
+      "description": "No IPsec ESP traffic was detected in the analyzed capture.",
+      "recommendation": "Verify that the VPN is using IPsec and that ESP traffic is present in the capture."
+    },
+    {
+      "id": "IKE-001",
+      "parameter": "ike_version",
+      "condition": "IKEv1",
+      "severity": "HIGH",
+      "score_impact": -20,
+      "title": "IKEv1 detected",
+      "description": "The capture indicates IKEv1 negotiation.",
+      "recommendation": "Prefer IKEv2 where supported and appropriate."
+    },
+    {
+      "id": "IKE-002",
+      "parameter": "ike_version",
+      "condition": "Unknown",
+      "severity": "MEDIUM",
+      "score_impact": -5,
+      "title": "IKE version unknown",
+      "description": "The IKE version could not be determined from the available evidence.",
+      "recommendation": "Capture IKE negotiation traffic and verify the configured IKE version."
+    },
+    {
+      "id": "CRYPTO-001",
+      "parameter": "encryption_algorithm",
+      "condition": "Unknown",
+      "severity": "MEDIUM",
+      "score_impact": -5,
+      "title": "Encryption algorithm unknown",
+      "description": "The encryption algorithm could not be determined from the available capture evidence.",
+      "recommendation": "Capture IKE Security Association proposals or provide testbed configuration evidence."
+    },
+    {
+      "id": "AUTH-001",
+      "parameter": "authentication_algorithm",
+      "condition": "Unknown",
+      "severity": "MEDIUM",
+      "score_impact": -5,
+      "title": "Authentication algorithm unknown",
+      "description": "The authentication/integrity algorithm could not be determined.",
+      "recommendation": "Capture the IKE SA negotiation or provide the VPN configuration."
+    },
+    {
+      "id": "KEX-001",
+      "parameter": "key_exchange_method",
+      "condition": "Unknown",
+      "severity": "MEDIUM",
+      "score_impact": -5,
+      "title": "Key exchange method unknown",
+      "description": "The key exchange parameters could not be determined from the available evidence.",
+      "recommendation": "Inspect the IKE Security Association proposal and Diffie-Hellman parameters."
+    },
+    {
+      "id": "MODE-001",
+      "parameter": "mode",
+      "condition": "Unknown",
+      "severity": "LOW",
+      "score_impact": -3,
+      "title": "IPsec mode unknown",
+      "description": "Tunnel or Transport mode could not be determined.",
+      "recommendation": "Capture sufficient ESP evidence or use testbed configuration metadata."
+    }
+  ]
+}

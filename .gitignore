@@ -1,0 +1,67 @@
+# ==============================
+# Python
+# ==============================
+__pycache__/
+*.py[cod]
+*.pyo
+
+.venv/
+venv/
+env/
+
+.env
+.env.*
+
+# ==============================
+# Runtime data
+# ==============================
+backend/uploads/
+backend/results/
+capture/runtime/
+
+*.log
+
+# ==============================
+# PCAP runtime captures
+# ==============================
+*.pcap
+*.pcapng
+
+# Keep controlled test/replay captures
+!testbed/captures/*.pcap
+!testbed/captures/*.pcapng
+
+# ==============================
+# AI generated features
+# ==============================
+ai/features/generated/
+
+# ==============================
+# Node / React
+# ==============================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+dashboard/dist/
+dashboard/.vite/
+
+# ==============================
+# Hardhat
+# ==============================
+blockchain/node_modules/
+blockchain/artifacts/
+blockchain/cache/
+
+# Local deployment/runtime state
+blockchain/deployments/
+
+# ==============================
+# OS / IDE
+# ==============================
+.DS_Store
+Thumbs.db
+
+.vscode/
+.idea/

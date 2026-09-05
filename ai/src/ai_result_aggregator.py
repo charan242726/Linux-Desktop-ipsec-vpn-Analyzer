@@ -137,6 +137,7 @@ def main():
     )
 
     result = {
+        "status": "ANALYZED",
         "capture_id": capture_id,
 
         "capture_file": str(

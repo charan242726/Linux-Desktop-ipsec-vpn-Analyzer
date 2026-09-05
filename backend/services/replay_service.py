@@ -169,6 +169,11 @@ class ReplayAnalyzer:
             capture_id=self.analysis_id,
         )
 
+        traffic = ai_result.get(
+            "traffic",
+            {}
+        )
+
         self.emit(
             "AI_ANALYSIS_COMPLETED",
             "AI analysis completed.",
@@ -189,7 +194,7 @@ class ReplayAnalyzer:
                     ),
 
                 "traffic_type":
-                    ai_result.get(
+                    traffic.get(
                         "traffic_type"
                     ),
 
@@ -281,37 +286,7 @@ class ReplayAnalyzer:
         )
 
         # ---------------------------------------------------------
-        # 6. PDF REPORT
-        # ---------------------------------------------------------
-
-        self.status = "GENERATING_PDF"
-
-        self.emit(
-            "PDF_GENERATION_STARTING",
-            "Generating PDF security report.",
-        )
-
-        pdf_file = (
-            self.analysis_dir
-            / "report"
-            / "security_report.pdf"
-        )
-
-        pdf_result = generate_pdf_report(
-            report_file,
-            pdf_file,
-        )
-
-        self.emit(
-            "PDF_GENERATED",
-            "PDF security report generated.",
-            {
-                "pdf_path": str(pdf_file),
-            },
-        )
-
-        # ---------------------------------------------------------
-        # 7. SHA-256
+        # 6. SHA-256
         # ---------------------------------------------------------
 
         self.status = "HASHING"
@@ -346,7 +321,7 @@ class ReplayAnalyzer:
         )
 
         # ---------------------------------------------------------
-        # 8. BLOCKCHAIN
+        # 7. BLOCKCHAIN
         # ---------------------------------------------------------
 
         self.status = "BLOCKCHAIN_REGISTERING"
@@ -354,6 +329,15 @@ class ReplayAnalyzer:
         self.emit(
             "BLOCKCHAIN_REGISTERING",
             "Registering report fingerprint on blockchain.",
+            {
+                "report_id":
+                    report_result.get(
+                        "report_id"
+                    ),
+
+                "report_hash":
+                    report_hash,
+            },
         )
 
         blockchain_result = (
@@ -394,7 +378,134 @@ class ReplayAnalyzer:
         )
 
         # ---------------------------------------------------------
-        # 9. COMPLETE
+        # 8. FINALIZE REPORT METADATA
+        # ---------------------------------------------------------
+
+        self.status = "FINALIZING_REPORT"
+
+        self.emit(
+            "REPORT_FINALIZING",
+            "Adding integrity and blockchain verification metadata.",
+        )
+
+        try:
+            with report_file.open(
+                "r",
+                encoding="utf-8",
+            ) as file:
+                final_report = json.load(file)
+
+        except (OSError, json.JSONDecodeError) as exc:
+
+            self.status = "FAILED"
+
+            raise ReplayCaptureError(
+                f"Unable to load generated security report: {exc}"
+            ) from exc
+
+        final_report["integrity"] = {
+            "status": "VERIFIED",
+            "hash_algorithm": "SHA-256",
+            "report_hash": report_hash,
+            "fingerprint_scope": (
+                "SHA-256 of the security report before "
+                "blockchain metadata was appended."
+            ),
+        }
+
+        final_report["blockchain"] = {
+            "status":
+                "BLOCKCHAIN_VERIFIED"
+                if blockchain_result.get("verified")
+                else "BLOCKCHAIN_NOT_VERIFIED",
+
+            "verified":
+                blockchain_result.get(
+                    "verified",
+                    False,
+                ),
+
+            "contract_address":
+                blockchain_result.get(
+                    "contract_address"
+                ),
+
+            "report_id":
+                blockchain_result.get(
+                    "report_id",
+                    report_result.get(
+                        "report_id"
+                    ),
+                ),
+
+            "blockchain_hash":
+                blockchain_result.get(
+                    "blockchain_hash",
+                    report_hash,
+                ),
+        }
+
+        final_report["status"] = "VERIFIED"
+
+        self.save_json(
+            report_file,
+            final_report,
+        )
+
+        report_result = final_report
+
+        self.emit(
+            "REPORT_FINALIZED",
+            "Security report finalized with integrity and blockchain metadata.",
+            {
+                "report_id":
+                    final_report.get(
+                        "report_id"
+                    ),
+
+                "report_hash":
+                    report_hash,
+
+                "blockchain_verified":
+                    blockchain_result.get(
+                        "verified"
+                    ),
+            },
+        )
+
+        # ---------------------------------------------------------
+        # 9. PDF REPORT
+        # ---------------------------------------------------------
+
+        self.status = "GENERATING_PDF"
+
+        self.emit(
+            "PDF_GENERATION_STARTING",
+            "Generating final PDF security report.",
+        )
+
+        pdf_file = (
+            self.analysis_dir
+            / "report"
+            / "security_report.pdf"
+        )
+
+        pdf_result = generate_pdf_report(
+            report_file,
+            pdf_file,
+        )
+
+        self.emit(
+            "PDF_GENERATED",
+            "Final PDF security report generated.",
+            {
+                "pdf_path":
+                    str(pdf_file),
+            },
+        )
+
+        # ---------------------------------------------------------
+        # 10. COMPLETE
         # ---------------------------------------------------------
 
         self.status = "COMPLETED"

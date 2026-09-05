@@ -41,14 +41,35 @@
       "recommendation": "Capture IKE Security Association proposals or provide testbed configuration evidence."
     },
     {
+      "id": "CRYPTO-002",
+      "parameter": "encryption_algorithm",
+      "condition": "AES-CBC",
+      "severity": "LOW",
+      "score_impact": -3,
+      "title": "AES-CBC encryption observed",
+      "description": "AES-CBC was observed in the negotiated encryption proposals. CBC does not provide authenticated encryption by itself.",
+      "recommendation": "Prefer an AEAD cipher such as AES-GCM when supported, while retaining compatibility requirements.",
+      "operator": "contains"
+    },
+    {
       "id": "AUTH-001",
       "parameter": "authentication_algorithm",
       "condition": "Unknown",
       "severity": "MEDIUM",
       "score_impact": -5,
-      "title": "Authentication algorithm unknown",
+      "title": "Authentication/integrity algorithm unknown",
       "description": "The authentication/integrity algorithm could not be determined.",
       "recommendation": "Capture the IKE SA negotiation or provide the VPN configuration."
+    },
+    {
+      "id": "AUTH-002",
+      "parameter": "integrity_algorithm",
+      "condition": "HMAC-SHA1-96",
+      "severity": "HIGH",
+      "score_impact": -15,
+      "title": "SHA-1 integrity observed",
+      "description": "HMAC-SHA1-96 was observed as an integrity transform.",
+      "recommendation": "Prefer a SHA-2 based integrity algorithm or an AEAD cipher such as AES-GCM."
     },
     {
       "id": "KEX-001",
@@ -59,6 +80,36 @@
       "title": "Key exchange method unknown",
       "description": "The key exchange parameters could not be determined from the available evidence.",
       "recommendation": "Inspect the IKE Security Association proposal and Diffie-Hellman parameters."
+    },
+    {
+      "id": "KEX-002",
+      "parameter": "key_exchange_method",
+      "condition": "DH Group 1",
+      "severity": "CRITICAL",
+      "score_impact": -30,
+      "title": "Weak Diffie-Hellman group observed",
+      "description": "A legacy weak Diffie-Hellman group was observed.",
+      "recommendation": "Replace legacy DH Group 1 with a modern, stronger key exchange group."
+    },
+    {
+      "id": "KEX-003",
+      "parameter": "key_exchange_method",
+      "condition": "DH Group 2",
+      "severity": "HIGH",
+      "score_impact": -20,
+      "title": "Legacy Diffie-Hellman group observed",
+      "description": "DH Group 2 uses a legacy 1024-bit MODP group.",
+      "recommendation": "Upgrade to a stronger Diffie-Hellman group."
+    },
+    {
+      "id": "PFS-001",
+      "parameter": "pfs",
+      "condition": "Disabled",
+      "severity": "MEDIUM",
+      "score_impact": -10,
+      "title": "Perfect Forward Secrecy disabled",
+      "description": "No separate Diffie-Hellman exchange was observed for the IPsec CHILD_SA proposal.",
+      "recommendation": "Enable PFS where supported to provide stronger protection against compromise of long-term keys."
     },
     {
       "id": "MODE-001",

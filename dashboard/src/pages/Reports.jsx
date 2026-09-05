@@ -287,6 +287,7 @@ export default function Reports() {
             setSelectedReport(null)
           }
           onDownload={handleDownload}
+          onPdfDownload={handlePdfDownload}
         />
       )}
     </div>
@@ -464,6 +465,9 @@ function ReportViewer({
   const reportData =
     report.report || {};
 
+  const traffic =
+    ai.traffic || {};
+
   return (
     <div
       className="report-modal-backdrop"
@@ -550,8 +554,68 @@ function ReportViewer({
           <ReportField
             label="TRAFFIC TYPE"
             value={
-              ai.traffic_type ||
+              traffic.traffic_type ||
               "Unknown"
+            }
+          />
+
+          <ReportField
+            label="ENCRYPTION"
+            value={
+              ai.encryption_algorithm ||
+              "Unknown"
+            }
+          />
+
+          <ReportField
+            label="INTEGRITY"
+            value={
+              ai.integrity_algorithm ||
+              ai.authentication_algorithm ||
+              "Unknown"
+            }
+          />
+
+          <ReportField
+            label="AUTHENTICATION"
+            value={
+              ai.authentication_method ||
+              "Unknown"
+            }
+          />
+
+          <ReportField
+            label="KEY EXCHANGE"
+            value={
+              ai.key_exchange_method ||
+              "Unknown"
+            }
+          />
+
+          <ReportField
+            label="PRF"
+            value={
+              ai.prf ||
+              "Unknown"
+            }
+          />
+
+          <ReportField
+            label="PFS"
+            value={
+              ai.pfs ||
+              "Unknown"
+            }
+          />
+
+          <ReportField
+            label="AI CONFIDENCE"
+            value={
+              typeof ai.confidence === "number"
+                ? `${Math.round(
+                    ai.confidence * 100
+                  )}%`
+                : "Unknown"
             }
           />
 
@@ -758,26 +822,30 @@ function renderSafeValue(value) {
   if (Array.isArray(value)) {
     return value
       .map((item) =>
-        typeof item === "string"
-          ? item
-          : JSON.stringify(item)
+        typeof item === "object"
+          ? JSON.stringify(item)
+          : String(item)
       )
       .join(", ");
   }
 
-  return JSON.stringify(value);
+  if (typeof value === "object") {
+    return JSON.stringify(value);
+  }
+
+  return String(value);
 }
 
 function formatDate(value) {
   if (!value) {
-    return "Date unavailable";
+    return "Unknown time";
   }
 
-  try {
-    return new Date(
-      value
-    ).toLocaleString();
-  } catch {
-    return value;
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return String(value);
   }
+
+  return date.toLocaleString();
 }

@@ -63,36 +63,51 @@ def rule_matches(ai_result, rule):
     """
     Determine whether a security rule matches the AI result.
 
-    Rules use:
-        id
-        parameter
-        condition
+    Supported rule conditions:
+
+        equals       -> exact value match
+        contains     -> substring match
+        not_contains -> substring must not be present
+
+    If no operator is supplied, "equals" is used for backward
+    compatibility with the original rules.
     """
 
     parameter = rule.get("parameter")
     condition = rule.get("condition")
+    operator = rule.get("operator", "equals")
 
-    if not parameter:
+    if not parameter or condition is None:
         return False
 
     actual_value = ai_result.get(parameter)
 
     # Normalize boolean values.
     if isinstance(actual_value, bool):
-        if condition == "true":
-            return actual_value is True
+        if operator == "equals":
+            if str(condition).lower() == "true":
+                return actual_value is True
 
-        if condition == "false":
-            return actual_value is False
+            if str(condition).lower() == "false":
+                return actual_value is False
 
-    # Normalize strings.
+    # Missing values remain explicitly unknown.
     if actual_value is None:
         actual_value = "Unknown"
 
     actual_value = str(actual_value)
     condition = str(condition)
 
-    return actual_value == condition
+    if operator == "equals":
+        return actual_value == condition
+
+    if operator == "contains":
+        return condition.lower() in actual_value.lower()
+
+    if operator == "not_contains":
+        return condition.lower() not in actual_value.lower()
+
+    return False
 
 
 def assess_security(ai_result, rules):

@@ -3,7 +3,7 @@
 from pathlib import Path
 import struct
 
-from scapy.all import IP, UDP, Raw, wrpcap
+from scapy.all import IP, UDP, Raw, ESP, wrpcap
 
 
 OUTPUT = Path(__file__).resolve().parents[1] / "captures" / "capture_crypto_vpn.pcap"
@@ -271,6 +271,76 @@ def main():
             spi_r,
         )
     )
+
+    # ---------------------------------------------------------
+    # ESP DATA
+    #
+    # The inner IPv4 packet is intentionally visible in this
+    # synthetic development capture so the existing mode
+    # analyzer can identify Tunnel mode.
+    # ---------------------------------------------------------
+
+    for sequence in range(1, 5):
+        inner = (
+            IP(
+                src="192.168.10.10",
+                dst="192.168.20.20",
+            )
+            / UDP(
+                sport=40000 + sequence,
+                dport=443,
+            )
+            / Raw(
+                load=b"synthetic encrypted VPN payload"
+            )
+        )
+
+        esp_packet = (
+            IP(
+                src="10.10.10.10",
+                dst="10.10.10.20",
+            )
+            / ESP(
+                spi=0x2001,
+                seq=sequence,
+            )
+            / Raw(
+                load=bytes(inner)
+            )
+        )
+
+        packets.append(esp_packet)
+
+    for sequence in range(5, 9):
+        inner = (
+            IP(
+                src="192.168.20.20",
+                dst="192.168.10.10",
+            )
+            / UDP(
+                sport=443,
+                dport=40000 + sequence,
+            )
+            / Raw(
+                load=b"synthetic encrypted VPN response"
+            )
+        )
+
+        esp_packet = (
+            IP(
+                src="10.10.10.20",
+                dst="10.10.10.10",
+            )
+            / ESP(
+                spi=0x2002,
+                seq=sequence,
+            )
+            / Raw(
+                load=bytes(inner)
+            )
+        )
+
+        packets.append(esp_packet)
 
     # Add reverse-direction packets so the capture resembles
     # a two-way negotiation.

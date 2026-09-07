@@ -54,3 +54,8 @@ app.include_router(status.router)
 app.include_router(sessions.router)
 app.include_router(reports.router)
 app.include_router(pcap.router)
+
+if __name__ == "__main__":
+    import uvicorn
+    # When run via `sudo python3 backend/api/main.py`, start the server
+    uvicorn.run("backend.api.main:app", host="127.0.0.1", port=8000, reload=False)

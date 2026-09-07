@@ -1,92 +1,52 @@
-import { NavLink } from "react-router-dom";
-import {
-  LayoutDashboard,
-  Radio,
-  Database,
-  ShieldCheck,
-  FileText,
-  Blocks,
-  Settings,
-} from "lucide-react";
+import { LayoutDashboard, FileArchive, Radio, Binary, LineChart, FileText, Settings } from 'lucide-react';
+import './Sidebar.css';
 
-const navigation = [
-  {
-    name: "Overview",
-    path: "/",
-    icon: LayoutDashboard,
-  },
-  {
-    name: "Live Analysis",
-    path: "/live",
-    icon: Radio,
-  },
-  {
-    name: "Captures",
-    path: "/captures",
-    icon: Database,
-  },
-  {
-    name: "Security",
-    path: "/security",
-    icon: ShieldCheck,
-  },
-  {
-    name: "Reports",
-    path: "/reports",
-    icon: FileText,
-  },
-  {
-    name: "Blockchain",
-    path: "/blockchain",
-    icon: Blocks,
-  },
-  {
-    name: "Settings",
-    path: "/settings",
-    icon: Settings,
-  },
+const NAV_ITEMS = [
+  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'pcap', label: 'PCAP Analysis', icon: FileArchive },
+  { id: 'live', label: 'Live Capture', icon: Radio },
+  { id: 'viewer', label: 'Packet Viewer', icon: Binary },
+  { id: 'results', label: 'Analysis Results', icon: LineChart },
+  { id: 'reports', label: 'Reports', icon: FileText },
+  { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ activeTab, setActiveTab }) {
   return (
-    <aside className="sidebar">
-      <div className="sidebar-brand">
-        <div className="brand-icon">
-          <ShieldCheck size={24} />
-        </div>
-
-        <div>
-          <div className="brand-title">VPN SENTINEL</div>
-          <div className="brand-subtitle">IPsec Security Center</div>
+    <div className="sidebar">
+      <div className="sidebar-header">
+        <div className="logo-badge">IP</div>
+        <div className="title-group">
+          <h2>IPsec Analyzer</h2>
+          <span className="mono">V1.0 - LOCAL-FIRST</span>
         </div>
       </div>
 
+      <div className="nav-section-title">NAVIGATION RAIL</div>
+      
       <nav className="sidebar-nav">
-        {navigation.map((item) => {
-          const Icon = item.icon;
-
-          return (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              end={item.path === "/"}
-              className={({ isActive }) =>
-                `sidebar-link ${isActive ? "active" : ""}`
-              }
-            >
-              <Icon size={19} />
-              <span>{item.name}</span>
-            </NavLink>
-          );
-        })}
+        {NAV_ITEMS.map((item) => (
+          <button 
+            key={item.id}
+            className={`nav-item ${activeTab === item.id ? 'active' : ''}`}
+            onClick={() => setActiveTab(item.id)}
+          >
+            <item.icon size={18} className="nav-icon" />
+            <span>{item.label}</span>
+            {activeTab === item.id && <div className="active-dot" />}
+          </button>
+        ))}
       </nav>
 
       <div className="sidebar-footer">
-        <div className="system-status">
-          <span className="status-dot"></span>
-          <span>Analyzer Online</span>
+        <div className="daemon-status">
+          <div className="daemon-dot"></div>
+          <div className="daemon-text">
+            <span className="daemon-title">analyzer daemon</span>
+            <span className="daemon-state mono">running</span>
+          </div>
         </div>
       </div>
-    </aside>
+    </div>
   );
 }

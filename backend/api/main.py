@@ -1,62 +1,56 @@
-from fastapi import FastAPI, HTTPException
+import logging
+import threading
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from typing import Dict, Any, Optional
 
-from backend.services.analyzer_service import AnalyzerService
+from backend.core.shared import stop_event
+from backend.capture.capture_thread import start_capture_thread
+from backend.worker.worker_thread import start_worker_thread
+from backend.services.ml_engine import load_model
+from backend.database.db import init_db
+from backend.api.routes import status, sessions, reports, pcap
 
-app = FastAPI(
-    title="AI-Powered IPsec VPN Analyzer API",
-    description="Backend API for predicting IPsec VPN traffic classes and evaluating security risks.",
-    version="2.0.0",
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(threadName)s] %(levelname)s — %(message)s"
 )
+logger = logging.getLogger(__name__)
 
-# Initialize Analyzer Service
-analyzer_service = AnalyzerService()
+_threads: list[threading.Thread] = []
 
-# CORS
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # STARTUP
+    logger.info("VPN Analyzer starting up")
+    init_db()
+    load_model()
+
+    t_capture = start_capture_thread()
+    t_worker = start_worker_thread()
+    _threads.extend([t_capture, t_worker])
+    logger.info("All threads started")
+
+    yield  # FastAPI runs here
+
+    # SHUTDOWN
+    logger.info("Shutting down — stopping threads")
+    stop_event.set()
+    for t in _threads:
+        t.join(timeout=5)
+    logger.info("Shutdown complete")
+
+
+app = FastAPI(title="VPN Analyzer", lifespan=lifespan)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:5174",
-        "http://127.0.0.1:5174",
-        "*" # Broadly allow for Vercel integration
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_origins=["http://localhost:*"],  # Electron only
+    allow_methods=["GET", "POST", "PATCH"],
     allow_headers=["*"],
 )
 
-class AnalyzeRequest(BaseModel):
-    session_id: str
-    ike_features: Dict[str, Any]
-    esp_features: Dict[str, Any]
-    xfrm_text: str
-
-@app.post("/api/analyze")
-def analyze_session(request: AnalyzeRequest):
-    try:
-        result = analyzer_service.analyze(
-            session_id=request.session_id,
-            ike_features=request.ike_features,
-            esp_features=request.esp_features,
-            xfrm_text=request.xfrm_text
-        )
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/")
-def root():
-    return {
-        "name": "AI-Powered IPsec VPN Analyzer",
-        "status": "running",
-        "version": "2.0.0",
-        "model_loaded": analyzer_service.model is not None
-    }
-    
-@app.get("/health")
-def health():
-    return {"status": "healthy"}
+app.include_router(status.router)
+app.include_router(sessions.router)
+app.include_router(reports.router)
+app.include_router(pcap.router)

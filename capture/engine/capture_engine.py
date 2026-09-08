@@ -1,6 +1,19 @@
+"""
+LEGACY / UNUSED on Windows
+──────────────────────────
+This file uses `tcpdump` and Linux-only commands (`ip route show default`).
+It is NOT used in the live backend pipeline.
+
+The active packet capture on Windows is:
+    backend/capture/capture_thread.py  ← uses Scapy + Npcap
+
+This file was kept for reference (possible Linux deployment) but should NOT
+be imported or called from any production code path.
+"""
 import json
 import subprocess
 import sys
+
 from datetime import datetime, timezone
 from pathlib import Path
 

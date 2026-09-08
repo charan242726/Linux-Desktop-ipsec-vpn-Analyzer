@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, Notification } = require('electron');
 const path = require('path');
 const sudo = require('sudo-prompt');
 
@@ -9,13 +9,21 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 800,
-    frame: false, // Frameless window for immersive app feel
-    transparent: true,
+    minWidth: 900,
+    minHeight: 600,
+    frame: false,
+    show: false,               // Don't show until ready-to-show fires
+    backgroundColor: '#040711', // Match CSS --foundation-bg, prevents white flash
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       nodeIntegration: false,
       contextIsolation: true,
     },
+  });
+
+  // Show only once fully rendered — avoids blank/white frame
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show();
   });
 
   if (isDev) {
@@ -85,4 +93,25 @@ ipcMain.handle('backend:start', async (event) => {
       resolve(true);
     });
   });
+});
+
+// IPC Handler for OS desktop notifications
+// The renderer calls window.electronAPI.sendNotification({ title, body, urgency })
+ipcMain.on('notify:send', (event, { title, body, urgency }) => {
+  if (!Notification.isSupported()) return;
+  const n = new Notification({
+    title: title || 'VPN Analyzer',
+    body: body || '',
+    // urgency: 'normal' | 'critical' | 'low'  (Linux only, silently ignored on Windows/macOS)
+    urgency: urgency || 'normal',
+    silent: urgency === 'low',
+  });
+  n.on('click', () => {
+    // Bring the window to focus when user clicks the notification
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+  });
+  n.show();
 });

@@ -4,5 +4,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   minimize: () => ipcRenderer.send('window:minimize'),
   maximize: () => ipcRenderer.send('window:maximize'),
   close: () => ipcRenderer.send('window:close'),
-  startBackend: () => ipcRenderer.invoke('backend:start')
+  startBackend: () => ipcRenderer.invoke('backend:start'),
+  // Fire an OS-level desktop notification
+  sendNotification: (opts) => ipcRenderer.send('notify:send', opts),
 });

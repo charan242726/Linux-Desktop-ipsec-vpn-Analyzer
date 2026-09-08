@@ -2,6 +2,8 @@ import sqlite3
 import json
 import logging
 import threading
+import hashlib
+import os
 from backend.config import DB_PATH
 
 logger = logging.getLogger(__name__)
@@ -42,6 +44,12 @@ def init_db():
                 findings_json TEXT
             )
         """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS preferences (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            )
+        """)
         conn.commit()
     logger.info("Database initialized")
 
@@ -72,6 +80,75 @@ def finalize_session(session_id: int):
         )
         conn.commit()
     logger.info(f"Session {session_id} finalized")
+
+# ─────────────────────────────────────────────────────────────
+# Preferences
+# ─────────────────────────────────────────────────────────────
+
+DEFAULT_PREFERENCES = {
+    "notifications_enabled": "true",
+    "pin_enabled": "false",
+    "network_interface": "Automatic",
+    "vpn_detection": "true",
+    "ai_analysis": "true",
+    "security_assessment": "true",
+}
+
+def get_preferences() -> dict:
+    """Return all preferences as a dict, filling in defaults for missing keys."""
+    with get_conn() as conn:
+        rows = conn.execute("SELECT key, value FROM preferences").fetchall()
+        stored = {r["key"]: r["value"] for r in rows}
+    # Merge defaults so callers always get every key
+    result = dict(DEFAULT_PREFERENCES)
+    result.update(stored)
+    return result
+
+def set_preference(key: str, value: str):
+    """Upsert a single preference value."""
+    with get_conn() as conn:
+        conn.execute(
+            "INSERT INTO preferences (key, value) VALUES (?, ?) "
+            "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+            (key, value)
+        )
+        conn.commit()
+
+# ── PIN helpers ─────────────────────────────────────────────
+
+def _hash_pin(pin: str, salt: bytes) -> str:
+    """PBKDF2-HMAC-SHA256, 260 000 iterations — fast enough, secure enough."""
+    dk = hashlib.pbkdf2_hmac("sha256", pin.encode(), salt, 260_000)
+    return salt.hex() + ":" + dk.hex()
+
+def set_pin(pin: str):
+    """Hash + store the PIN. Also marks pin_enabled = true."""
+    salt = os.urandom(16)
+    hashed = _hash_pin(pin, salt)
+    set_preference("pin_hash", hashed)
+    set_preference("pin_enabled", "true")
+    logger.info("PIN updated")
+
+def clear_pin():
+    """Remove PIN and disable lock."""
+    with get_conn() as conn:
+        conn.execute("DELETE FROM preferences WHERE key='pin_hash'")
+        conn.commit()
+    set_preference("pin_enabled", "false")
+    logger.info("PIN cleared")
+
+def verify_pin(pin: str) -> bool:
+    """Return True if the provided PIN matches the stored hash."""
+    prefs = get_preferences()
+    pin_hash = prefs.get("pin_hash", "")
+    if not pin_hash:
+        return False
+    try:
+        salt_hex, dk_hex = pin_hash.split(":")
+        salt = bytes.fromhex(salt_hex)
+        return _hash_pin(pin, salt) == pin_hash
+    except Exception:
+        return False
 
 def get_all_reports() -> list:
     with get_conn() as conn:

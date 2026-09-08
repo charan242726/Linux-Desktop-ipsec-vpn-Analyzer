@@ -7,9 +7,9 @@ from backend.core.shared import packet_queue
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/sessions")
+router = APIRouter(prefix="/analysis")
 
-@router.post("")
+@router.post("/start")
 def start_session():
     success = app_state.transition(
         expected=VpnState.VPN_DETECTED,
@@ -34,7 +34,7 @@ def start_session():
 
     return {"session_id": session_id, "state": VpnState.ANALYZING}
 
-@router.get("/current")
+@router.get("")
 def get_current():
     state = app_state.get_state()
     if state not in (VpnState.ANALYZING, VpnState.DISCONNECTED):

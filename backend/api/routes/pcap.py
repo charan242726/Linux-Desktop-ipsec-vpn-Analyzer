@@ -8,12 +8,12 @@ from backend.services.rule_engine import run_rules
 from backend.services.ml_engine import classify_traffic
 from backend.database.db import create_session, save_findings
 
-router = APIRouter(prefix="/analyze-pcap")
+router = APIRouter(prefix="/analysis")
 
 ESP_PROTO = 50
 IKE_PORTS = {500, 4500}
 
-@router.post("")
+@router.post("/snap")
 async def analyze_pcap(file: UploadFile = File(...)):
     if not file.filename.endswith((".pcap", ".pcapng")):
         raise HTTPException(status_code=400, detail="Only .pcap/.pcapng files accepted")

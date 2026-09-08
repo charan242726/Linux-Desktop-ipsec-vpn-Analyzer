@@ -43,7 +43,17 @@ yarn-debug.log*
 pnpm-debug.log*
 
 dashboard/dist/
+dashboard/dist-electron/
 dashboard/.vite/
+dashboard/node_modules/
+
+# ==============================
+# PyInstaller / Backend build
+# ==============================
+backend/dist/
+backend/build/
+build/
+*.spec
 
 # ==============================
 # Hardhat

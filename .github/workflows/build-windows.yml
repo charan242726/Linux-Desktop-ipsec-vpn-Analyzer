@@ -1,0 +1,59 @@
+name: Build Windows Executable
+
+on:
+  workflow_dispatch: # Allows manual trigger from the GitHub Actions UI
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11' # Use stable python
+
+      - name: Install Npcap SDK / WinPcap (Needed for Scapy on Windows)
+        run: |
+          # Normally Npcap needs to be installed, but for building, scapy just needs standard libs
+          python -m pip install --upgrade pip
+
+      - name: Install Python Dependencies & PyInstaller
+        working-directory: ./backend
+        run: |
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Compile Backend with PyInstaller
+        working-directory: ./backend
+        run: |
+          # Build a single-file executable. We don't use --noconsole because we want to see stdout in Electron
+          pyinstaller --name backend --onefile api/main.py
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Frontend Dependencies
+        working-directory: ./dashboard
+        run: npm install
+
+      - name: Build React App
+        working-directory: ./dashboard
+        run: npm run build
+
+      - name: Package with Electron Builder
+        working-directory: ./dashboard
+        run: |
+          # We use npx to run the locally installed electron-builder
+          npx electron-builder --win
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: IPsecAnalyzer-Windows
+          path: dashboard/dist-electron/*.exe

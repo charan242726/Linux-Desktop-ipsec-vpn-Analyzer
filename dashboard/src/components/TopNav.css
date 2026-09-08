@@ -1,0 +1,144 @@
+.topnav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 32px;
+  height: 80px;
+  border-bottom: 1px solid transparent; /* Keep transparent or subtle border */
+  -webkit-app-region: drag; /* Let user drag window from empty space here */
+}
+
+/* Make interactable elements undraggable */
+.search-container, .profile-container {
+  -webkit-app-region: no-drag;
+}
+
+.search-container {
+  display: flex;
+  align-items: center;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0 16px;
+  width: 500px;
+  height: 40px;
+  transition: border-color 0.2s;
+}
+
+.search-container:focus-within {
+  border-color: var(--accent-cyan);
+}
+
+.search-icon {
+  color: var(--text-muted);
+  margin-right: 12px;
+}
+
+.search-input {
+  flex: 1;
+  height: 100%;
+  font-size: 0.9rem;
+}
+
+.shortcut-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.05);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--text-muted);
+  font-size: 0.6rem;
+}
+
+.profile-container {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.bell-btn {
+  position: relative;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+}
+
+.bell-btn:hover {
+  color: var(--text-primary);
+}
+
+.notification-dot {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 6px;
+  height: 6px;
+  background-color: var(--accent-cyan);
+  border-radius: 50%;
+  box-shadow: 0 0 6px var(--accent-cyan);
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background-color: var(--bg-card);
+  padding: 6px 16px 6px 6px;
+  border-radius: 20px;
+  border: 1px solid var(--border-color);
+}
+
+.avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: var(--accent-cyan);
+  color: #000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.user-role {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+.window-controls-inline {
+  display: flex;
+  gap: 12px;
+  margin-left: 16px;
+  border-left: 1px solid var(--border-color);
+  padding-left: 24px;
+}
+
+.window-controls-inline button {
+  color: var(--text-secondary);
+}
+
+.window-controls-inline button:hover {
+  color: var(--text-primary);
+}
+
+.window-controls-inline .close-btn:hover {
+  color: #F43F5E;
+}

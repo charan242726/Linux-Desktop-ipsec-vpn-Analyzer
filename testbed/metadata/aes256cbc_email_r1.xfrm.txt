@@ -1,0 +1,14 @@
+src 10.10.0.10 dst 10.10.0.20
+	proto esp spi 0xc2e1b1da reqid 1 mode tunnel
+	replay-window 0 flag af-unspec
+	auth-trunc hmac(sha256) 0x73de68138daeaba6719da5fa7b7070a3d96b6cf1eb9b9ea3bd76b5eefc8e1ac9 128
+	enc cbc(aes) 0x1ecb5067b597caa53fb4b7cef4c9d62f54839654fd848d4de74329e7d9256455
+	lastused 2026-09-04 18:31:52
+	anti-replay context: seq 0x0, oseq 0xb10, bitmap 0x00000000
+src 10.10.0.20 dst 10.10.0.10
+	proto esp spi 0xc1199d94 reqid 1 mode tunnel
+	replay-window 32 flag af-unspec
+	auth-trunc hmac(sha256) 0x0c6f018b29e2abe637a3191706ecee364d3359edf3fb7f8673e413440a129d3a 128
+	enc cbc(aes) 0xa160dfc593236b59c4fc17b1c8680a946111f5b5be25307f9574754ab4a53de6
+	lastused 2026-09-04 18:31:52
+	anti-replay context: seq 0xf14, oseq 0x0, bitmap 0xffffffff

@@ -1,44 +1,36 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useState } from 'react';
+import Sidebar from './components/Sidebar';
+import TopNav from './components/TopNav';
+import DashboardView from './components/DashboardView';
+import ResultsView from './components/ResultsView';
+import { PcapView, LiveCaptureView, PacketViewerView, ReportsView, SettingsView } from './components/OtherViews';
+import { useAnalyzer } from './hooks/useAnalyzer';
 
-import { AnalysisProvider } from "./context/AnalysisContext";
+function App() {
+  const [activeTab, setActiveTab] = useState('dashboard');
+  
+  // Lift the hook state up so both views have access to live findings
+  const analyzerProps = useAnalyzer();
 
-import Sidebar from "./components/Sidebar";
-import Topbar from "./components/Topbar";
-
-import Overview from "./pages/Overview";
-import LiveAnalysis from "./pages/LiveAnalysis";
-import Captures from "./pages/Captures";
-import Security from "./pages/Security";
-import Reports from "./pages/Reports";
-import Blockchain from "./pages/Blockchain";
-import Settings from "./pages/Settings";
-
-import "./App.css";
-
-export default function App() {
   return (
-    <BrowserRouter>
-      <AnalysisProvider>
-        <div className="app-shell">
-          <Sidebar />
-
-          <div className="app-main">
-            <Topbar />
-
-            <main className="app-content">
-              <Routes>
-                <Route path="/" element={<Overview />} />
-                <Route path="/live" element={<LiveAnalysis />} />
-                <Route path="/captures" element={<Captures />} />
-                <Route path="/security" element={<Security />} />
-                <Route path="/reports" element={<Reports />} />
-                <Route path="/blockchain" element={<Blockchain />} />
-                <Route path="/settings" element={<Settings />} />
-              </Routes>
-            </main>
-          </div>
+    <>
+      <div className="grid-bg"></div>
+      <div className="app-layout">
+        <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+        
+        <div className="main-content">
+          <TopNav />
+          {activeTab === 'dashboard' && <DashboardView {...analyzerProps} />}
+          {activeTab === 'pcap' && <PcapView />}
+          {activeTab === 'live' && <LiveCaptureView />}
+          {activeTab === 'viewer' && <PacketViewerView />}
+          {activeTab === 'results' && <ResultsView {...analyzerProps} />}
+          {activeTab === 'reports' && <ReportsView />}
+          {activeTab === 'settings' && <SettingsView />}
         </div>
-      </AnalysisProvider>
-    </BrowserRouter>
+      </div>
+    </>
   );
 }
+
+export default App;

@@ -1,138 +1,61 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+import logging
+import threading
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.api.analysis_api import (
-    start_live_analysis,
-    get_analysis,
-    stream_analysis,
+from backend.core.shared import stop_event
+from backend.capture.capture_thread import start_capture_thread
+from backend.worker.worker_thread import start_worker_thread
+from backend.services.ml_engine import load_model
+from backend.database.db import init_db
+from backend.api.routes import status, sessions, reports, pcap
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(threadName)s] %(levelname)s — %(message)s"
 )
+logger = logging.getLogger(__name__)
 
-from backend.api.replay_api import router as replay_router
-from backend.api.report_api import router as report_router
+_threads: list[threading.Thread] = []
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # STARTUP
+    logger.info("VPN Analyzer starting up")
+    init_db()
+    load_model()
+
+    t_capture = start_capture_thread()
+    t_worker = start_worker_thread()
+    _threads.extend([t_capture, t_worker])
+    logger.info("All threads started")
+
+    yield  # FastAPI runs here
+
+    # SHUTDOWN
+    logger.info("Shutting down — stopping threads")
+    stop_event.set()
+    for t in _threads:
+        t.join(timeout=5)
+    logger.info("Shutdown complete")
 
 
-app = FastAPI(
-    title="AI-Powered IPsec VPN Analyzer",
-    description="AI-powered IPsec VPN protocol analysis and security assessment platform",
-    version="1.0.0",
-)
-
-
-# ============================================================
-# CORS
-# ============================================================
+app = FastAPI(title="VPN Analyzer", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-    	"http://localhost:5173",
-    	"http://127.0.0.1:5173",
-    	"http://localhost:5174",
-    	"http://127.0.0.1:5174",
-    	"http://[::1]:5174",
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_origins=["http://localhost:*"],  # Electron only
+    allow_methods=["GET", "POST", "PATCH"],
     allow_headers=["*"],
 )
 
+app.include_router(status.router)
+app.include_router(sessions.router)
+app.include_router(reports.router)
+app.include_router(pcap.router)
 
-# ============================================================
-# ROUTERS
-# ============================================================
-
-app.include_router(replay_router)
-app.include_router(report_router)
-
-
-# ============================================================
-# ROOT
-# ============================================================
-
-@app.get("/")
-def root():
-    return {
-        "name": "AI-Powered IPsec VPN Analyzer",
-        "status": "running",
-        "version": "1.0.0",
-    }
-
-
-# ============================================================
-# HEALTH CHECK
-# ============================================================
-
-@app.get("/health")
-def health():
-    return {
-        "status": "healthy",
-    }
-
-
-# ============================================================
-# LIVE ANALYSIS
-# ============================================================
-
-@app.post("/api/analysis/start")
-def start_analysis():
-    return start_live_analysis()
-
-
-@app.get("/api/analysis/{analysis_id}")
-def analysis_status(analysis_id: str):
-    result = get_analysis(analysis_id)
-
-    if result is None:
-        return {
-            "error": "Analysis not found",
-            "analysis_id": analysis_id,
-        }
-
-    return result
-
-
-# ============================================================
-# LIVE ANALYSIS WEBSOCKET
-# ============================================================
-
-@app.websocket("/ws/analysis/{analysis_id}")
-async def analysis_websocket(
-    websocket: WebSocket,
-    analysis_id: str,
-):
-    await websocket.accept()
-
-    try:
-        result = get_analysis(analysis_id)
-
-        if result is None:
-            await websocket.send_json(
-                {
-                    "type": "error",
-                    "message": "Analysis not found.",
-                    "analysis_id": analysis_id,
-                }
-            )
-
-            await websocket.close()
-            return
-
-        await stream_analysis(
-            analysis_id,
-            websocket,
-        )
-
-    except WebSocketDisconnect:
-        return
-
-    except Exception as exc:
-        try:
-            await websocket.send_json(
-                {
-                    "type": "error",
-                    "message": str(exc),
-                    "analysis_id": analysis_id,
-                }
-            )
-        finally:
-            await websocket.close()
+if __name__ == "__main__":
+    import uvicorn
+    # When run via `sudo python3 backend/api/main.py`, start the server
+    uvicorn.run("backend.api.main:app", host="127.0.0.1", port=8000, reload=False)

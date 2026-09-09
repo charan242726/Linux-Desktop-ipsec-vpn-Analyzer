@@ -79,7 +79,8 @@ All bundled into a single `.exe` installer — no Python, no command line needed
 │  └─────────────────────────────────────────────────────────┘  │
 │                           ↕ HTTP REST                         │
 │  ┌─────────────────────────────────────────────────────────┐  │
-│  │            FastAPI Backend (backend.exe)                 │  │
+│  │        Python VPN Analyzer Service (Windows Service)     │  │
+│  │                     (Runs as SYSTEM)                    │  │
 │  │                                                         │  │
 │  │  Thread 1: FastAPI REST Server  (port 8000)             │  │
 │  │  Thread 2: Scapy Sniffer  →  Npcap → UDP 500/4500/ESP  │  │
@@ -89,7 +90,7 @@ All bundled into a single `.exe` installer — no Python, no command line needed
 │  │                              →  SharedState             │  │
 │  └─────────────────────────────────────────────────────────┘  │
 │                                                               │
-│  resources/backend/backend.exe  (PyInstaller compiled)        │
+│  resources/backend/backend.exe  (Registered Windows Service)  │
 └───────────────────────────────────────────────────────────────┘
 ```
 
@@ -98,31 +99,27 @@ All bundled into a single `.exe` installer — no Python, no command line needed
 ## 🔄 Complete User Workflow
 
 ```
-1. User installs IPsec VPN Analyzer Setup.exe
+1. User runs IPsec VPN Analyzer Setup.exe (Admin mode)
           ↓
-2. App opens → dark glassmorphism dashboard
+2. Setup automatically runs Npcap installer & registers Background Service
           ↓
-3. User triggers capture → UAC admin prompt appears
+3. App opens → UI waits in IDLE state (no UAC prompts needed)
           ↓
-4. Backend (backend.exe) launches with admin privileges
+4. Windows Service (running continuously as SYSTEM) detects IPsec traffic
           ↓
-5. Scapy hooks into the network interface via Npcap
+5. OS-level Notification triggers: "VPN Detected"
           ↓
-6. IKE packets (UDP 500/4500) are captured and decoded
-   ESP packets (IP Proto 50) are captured and feature-extracted
+6. User clicks "Start Analysis" on the Dashboard banner
           ↓
-7. ML Engine (XGBoost) classifies encrypted traffic type
-   Security Rules Engine checks for misconfigurations
+7. Scapy decodes IKE packets (UDP 500/4500) and extracts ESP features
           ↓
-8. UI polls /analysis API → Live dashboard updates:
-   - IKE parameters (SPI, exchange type, message ID)
-   - ML prediction + confidence score
-   - Security alerts
-   - Real-time throughput charts
+8. Dual-Path Intelligence kicks in:
+   - ML Engine classifies encrypted traffic type (Video, VoIP, etc)
+   - Rule Engine deterministically flags cryptographic weaknesses
           ↓
-9. User clicks "Generate Report" → PDF downloaded
+9. UI polls /analysis API → Live dashboard updates with real metrics
           ↓
-10. (Optional) Hash registered on blockchain for audit trail
+10. User clicks "Generate Report" → PDF downloaded
 ```
 
 ---
@@ -173,16 +170,18 @@ All bundled into a single `.exe` installer — no Python, no command line needed
 
 ## 📦 Quick Install (End Users)
 
-### Step 1 — Install Npcap
-Download from **https://npcap.com** and install.  
-✅ Check **"Install Npcap in WinPcap API-compatible mode"** during setup.
-
-### Step 2 — Download the Installer
+### Step 1 — Download the Installer
 Go to the [**Releases**](../../releases) page → Download `IPsec VPN Analyzer Setup 0.0.0.exe`
 
-### Step 3 — Install & Launch
-Double-click the installer. It installs and launches automatically.  
-Allow the **UAC Administrator prompt** — required for packet capture.
+### Step 2 — Install
+Run the installer. It will:
+1. Ask for Administrator privileges.
+2. Extract the application files.
+3. **Automatically pop up the Npcap installer**. (Complete the Npcap setup manually).
+4. Seamlessly register and start the `VPNAnalyzerService` in the Windows background.
+
+### Step 3 — Launch & Analyze
+Open the app. It will connect to the background service automatically. Connect to any IKEv2 VPN to trigger the detection!
 
 ---
 
@@ -239,7 +238,7 @@ npm run electron:dev
 cd dashboard
 npm run build
 npx electron-builder --win
-# Produces: dashboard\dist-electron\IPsec VPN Analyzer Setup 0.0.0.exe
+# Produces: dashboard\dist-electron-final\IPsec VPN Analyzer Setup 0.0.0.exe
 ```
 
 ---
@@ -265,6 +264,22 @@ The rule engine (`backend/services/`) flags:
 | Weak DH Group | Groups < 14 (< 2048-bit) flagged |
 | Replay Attack Window | Missing or disabled anti-replay protection |
 | Weak Cipher | DES, 3DES, MD5-based suites flagged |
+
+---
+
+## 🧠 Dual-Path Intelligence Architecture
+
+The analyzer uses two distinct, parallel intelligence paths answering different questions to avoid "guessing" cryptographic security via ML:
+
+### 1. Deterministic Security Analysis (Rules)
+* **Goal:** "Is the IPsec configuration using weak cryptography?"
+* **Method:** Deterministic parsing of IKE parameters (Diffie-Hellman groups, ciphers, hashes) extracted directly from the packets.
+* **Why:** Security vulnerabilities (like NULL encryption or Aggressive Mode) are absolute facts present in the metadata. The system flags these using hardcoded NSA/NIST guidelines, rather than relying on ML probabilities.
+
+### 2. Machine Learning Traffic Analysis (Behavioral)
+* **Goal:** "What type of application traffic is flowing inside the encrypted payload?"
+* **Method:** Zero-decryption feature extraction (measuring packet sizes, inter-arrival timing, burst rates, and directionality) fed into an XGBoost/Random Forest model.
+* **Why:** ESP payloads cannot be decrypted without the keys. The ML model is purely responsible for behavioral classification (identifying Web, VoIP, Video, Bulk) without accessing plaintext.
 
 ---
 
@@ -331,7 +346,6 @@ vpn-ipsec-analyzer/
 
 ## ⚠️ Known Limitations
 
-- Npcap must be installed manually by the user (silent install planned for v1.1)
 - ML model accuracy varies by network environment and traffic mix
 - Blockchain feature requires a local Hardhat node or testnet configuration
 - Windows only — Linux/macOS desktop builds not yet available

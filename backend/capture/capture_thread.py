@@ -1,7 +1,7 @@
 import logging
 import threading
 from collections import deque
-from scapy.all import sniff, UDP, IP
+from scapy.all import sniff, UDP, IP, IPv6
 from backend.core.shared import app_state, packet_queue, stop_event
 from backend.core.state import VpnState
 from backend.config import CAPTURE_FILTER
@@ -36,31 +36,67 @@ def _is_natt(packet) -> bool:
         packet[UDP].dport == 4500 or packet[UDP].sport == 4500
     )
 
+# Best-known cipher from IKE exchange (updated by worker)
+_current_cipher = "unknown"
+_cipher_lock = threading.Lock()
+
+def set_current_cipher(cipher: str):
+    global _current_cipher
+    with _cipher_lock:
+        _current_cipher = cipher
+
+def get_current_cipher() -> str:
+    with _cipher_lock:
+        return _current_cipher
+
 def _process_packet(packet):
     state = app_state.get_state()
 
-    # Classify packet type first
     is_ike = _is_ike(packet)
     is_esp = _is_esp(packet)
-    is_natt = _is_natt(packet)  # UDP/4500 — could be IKE or ESP-in-UDP
+    is_natt = _is_natt(packet)
 
     if not (is_ike or is_esp or is_natt):
         return  # ignore non-VPN traffic
 
     if state == VpnState.IDLE:
-        # Always buffer VPN candidate packets
         with _buffer_lock:
             _rolling_buffer.append(packet)
         app_state.set_state(VpnState.VPN_DETECTED)
         logger.info("VPN traffic detected")
 
     elif state == VpnState.VPN_DETECTED:
-        # Keep buffering — user hasn't clicked start yet
         with _buffer_lock:
             _rolling_buffer.append(packet)
 
     elif state == VpnState.ANALYZING:
-        # Push to queue for worker
+        # Track bandwidth and peer sessions for live UI
+        pkt_size = len(packet)
+
+        if is_esp or is_natt:
+            layer = IP if IP in packet else (IPv6 if IPv6 in packet else None)
+            if layer:
+                src_ip = packet[layer].src
+                dst_ip = packet[layer].dst
+
+                # Determine direction — heuristic: private src = outbound
+                is_private_src = (
+                    src_ip.startswith("10.") or
+                    src_ip.startswith("192.168.") or
+                    src_ip.startswith("172.") or
+                    src_ip == "127.0.0.1"
+                )
+                is_inbound = not is_private_src
+
+                app_state.record_packet(pkt_size, is_inbound)
+
+                # Track the remote peer
+                remote_ip = dst_ip if is_inbound else src_ip
+                local_ip = src_ip if is_inbound else dst_ip
+                cipher = get_current_cipher()
+                app_state.upsert_session_peer(remote_ip, local_ip, cipher, pkt_size)
+
+        # Push to queue for worker analysis
         if not packet_queue.full():
             packet_queue.put(packet)
 
@@ -74,7 +110,7 @@ def run_capture():
             sniff(
                 filter=CAPTURE_FILTER,
                 prn=_process_packet,
-                store=False,                          # don't accumulate in memory
+                store=False,
                 timeout=2,
                 stop_filter=lambda p: stop_event.is_set()
             )

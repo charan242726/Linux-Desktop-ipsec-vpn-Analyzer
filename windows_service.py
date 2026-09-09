@@ -11,31 +11,39 @@ After install: python Scripts/pywin32_postinstall.py -install
 
 import sys
 import os
-import subprocess
 import win32serviceutil
 import win32service
 import win32event
 import servicemanager
+import threading
 
 # Add project root to path so imports work inside service
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 class VPNAnalyzerService(win32serviceutil.ServiceFramework):
     _svc_name_         = "VPNAnalyzerService"
-    _svc_display_name_ = "VPN Analyzer Background Service"
+    _svc_display_name_ = "IPsec VPN Analyzer Service"
     _svc_description_  = "Monitors IPsec VPN traffic and provides analysis via localhost:8000"
 
     def __init__(self, args):
         win32serviceutil.ServiceFramework.__init__(self, args)
         self.stop_event = win32event.CreateEvent(None, 0, 0, None)
-        self.process = None
+        self.server = None
 
     def SvcStop(self):
         self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
         win32event.SetEvent(self.stop_event)
-        if self.process:
-            self.process.terminate()
-            self.process.wait(timeout=10)
+        
+        # Stop uvicorn server gracefully
+        if self.server:
+            self.server.should_exit = True
+            
+        # Signal our background threads to stop
+        try:
+            from backend.core.shared import stop_event as backend_stop
+            backend_stop.set()
+        except Exception:
+            pass
 
     def SvcDoRun(self):
         servicemanager.LogMsg(
@@ -46,19 +54,17 @@ class VPNAnalyzerService(win32serviceutil.ServiceFramework):
         self._run()
 
     def _run(self):
-        # Run uvicorn as subprocess — works with PyInstaller too
-        cmd = [
-            sys.executable, "-m", "uvicorn",
-            "backend.api.main:app",
-            "--host", "127.0.0.1",
-            "--port", "8000",
-            "--log-level", "info"
-        ]
-        self.process = subprocess.Popen(
-            cmd,
-            cwd=os.path.dirname(os.path.abspath(__file__))
-        )
-        # Wait until stop signal
+        import uvicorn
+        from backend.api.main import app
+        
+        config = uvicorn.Config(app, host="127.0.0.1", port=8000, log_level="info")
+        self.server = uvicorn.Server(config)
+        
+        # Run uvicorn in a separate thread so we can wait on the Windows stop event
+        t = threading.Thread(target=self.server.run, daemon=True)
+        t.start()
+        
+        # Wait until stop signal from Windows Service Control Manager
         win32event.WaitForSingleObject(self.stop_event, win32event.INFINITE)
 
 

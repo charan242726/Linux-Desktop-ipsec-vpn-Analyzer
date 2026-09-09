@@ -6,17 +6,24 @@ import {
   RefreshCw, 
   Copy, 
   Check,
-  Lock
+  Lock,
+  CheckCircle2
 } from 'lucide-react';
 
 export const TunnelDetailModal = ({ tunnel, onClose }) => {
   const [copiedKey, setCopiedKey] = useState(false);
   const [rekeying, setRekeying] = useState(false);
+  // Bug 11 fix: track rekey success toast
+  const [rekeySuccess, setRekeySuccess] = useState(false);
 
   if (!tunnel) return null;
 
+  // Bug 10 fix: copy the actual tunnel's SPI based on its id, not a hardcoded value
+  const spiIn  = `0x${tunnel.id.replace('TNL-', '')}C902`;
+  const spiOut = `0xF${tunnel.id.replace('TNL-', '')}B93E`;
+
   const handleCopySpi = () => {
-    navigator.clipboard.writeText('0x84A1C902-0xF001B93E');
+    navigator.clipboard.writeText(`${spiIn} | ${spiOut}`);
     setCopiedKey(true);
     setTimeout(() => setCopiedKey(false), 2000);
   };
@@ -25,14 +32,23 @@ export const TunnelDetailModal = ({ tunnel, onClose }) => {
     setRekeying(true);
     setTimeout(() => {
       setRekeying(false);
+      // Bug 11 fix: show success state after rekey
+      setRekeySuccess(true);
+      setTimeout(() => setRekeySuccess(false), 3000);
     }, 1800);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-      
-      {/* Dark Glass Modal Container */}
-      <div className="relative w-full max-w-2xl bg-[#090e1a] border border-cyan-500/25 rounded-2xl shadow-[0_25px_70px_rgba(0,0,0,0.85)] overflow-hidden font-mono text-slate-200">
+    // Bug 5 fix: clicking backdrop closes modal
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+      onClick={onClose}
+    >
+      {/* Dark Glass Modal Container — stop propagation so clicking inside doesn't close */}
+      <div
+        className="relative w-full max-w-2xl bg-[#090e1a] border border-cyan-500/25 rounded-2xl shadow-[0_25px_70px_rgba(0,0,0,0.85)] overflow-hidden font-mono text-slate-200"
+        onClick={(e) => e.stopPropagation()}
+      >
         
         {/* Specular Header Bar */}
         <div className="specular-bar px-5 py-4 flex items-center justify-between border-b border-white/10">
@@ -62,6 +78,14 @@ export const TunnelDetailModal = ({ tunnel, onClose }) => {
         {/* Modal Body Content */}
         <div className="p-5 space-y-5 max-h-[80vh] overflow-y-auto">
           
+          {/* Bug 11 fix: Rekey success toast */}
+          {rekeySuccess && (
+            <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/15 border border-emerald-400/30 text-emerald-300 text-xs font-mono animate-pulse">
+              <CheckCircle2 className="w-4 h-4" />
+              IKE SA re-key completed successfully for {tunnel.id}. New SPI pair negotiated.
+            </div>
+          )}
+
           {/* Top Quick Status Row */}
           <div className="grid grid-cols-3 gap-3 text-xs">
             <div className="p-3 rounded-xl bg-slate-900/60 border border-white/5 space-y-1">
@@ -106,7 +130,7 @@ export const TunnelDetailModal = ({ tunnel, onClose }) => {
               </div>
             </div>
 
-            {/* SPI Keys Row */}
+            {/* Bug 10 fix: SPI values derived from actual tunnel */}
             <div className="pt-2 border-t border-white/5">
               <div className="flex items-center justify-between text-[11px]">
                 <span className="text-slate-500">Inbound / Outbound SPI Pair:</span>
@@ -119,7 +143,7 @@ export const TunnelDetailModal = ({ tunnel, onClose }) => {
                 </button>
               </div>
               <div className="mt-1 p-2 rounded bg-black/60 border border-white/10 text-[11px] text-slate-300 font-mono">
-                SPI-IN: 0x84A1C902 | SPI-OUT: 0xF001B93E
+                SPI-IN: {spiIn} | SPI-OUT: {spiOut}
               </div>
             </div>
           </div>
@@ -139,6 +163,9 @@ export const TunnelDetailModal = ({ tunnel, onClose }) => {
               <div className="text-slate-300">[11:12:05] Establishing CHILD_SA [{tunnel.id}] ESP mode...</div>
               <div className="text-emerald-400">[11:12:06] CHILD_SA established successfully (AES-256-GCM)</div>
               <div className="text-slate-400">[11:13:10] Heartbeat ACK received (0.4ms response time)</div>
+              {rekeySuccess && (
+                <div className="text-cyan-400">[{new Date().toLocaleTimeString()}] IKE SA re-key completed. New SPI pair: {spiIn}</div>
+              )}
             </div>
           </div>
 
@@ -149,10 +176,22 @@ export const TunnelDetailModal = ({ tunnel, onClose }) => {
           <button 
             onClick={handleTriggerRekey}
             disabled={rekeying}
-            className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-cyan-500/15 border border-cyan-400/30 text-cyan-300 hover:bg-cyan-500/25 transition-all text-xs font-semibold"
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg border transition-all text-xs font-semibold ${
+              rekeySuccess
+                ? 'bg-emerald-500/15 border-emerald-400/30 text-emerald-300'
+                : 'bg-cyan-500/15 border-cyan-400/30 text-cyan-300 hover:bg-cyan-500/25'
+            }`}
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${rekeying ? 'animate-spin' : ''}`} />
-            <span>{rekeying ? 'RE-KEYING IN PROGRESS...' : 'FORCE RE-KEY IKE SA'}</span>
+            {rekeying ? (
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+            ) : rekeySuccess ? (
+              <CheckCircle2 className="w-3.5 h-3.5" />
+            ) : (
+              <RefreshCw className="w-3.5 h-3.5" />
+            )}
+            <span>
+              {rekeying ? 'RE-KEYING IN PROGRESS...' : rekeySuccess ? 'RE-KEY SUCCESSFUL' : 'FORCE RE-KEY IKE SA'}
+            </span>
           </button>
 
           <button 

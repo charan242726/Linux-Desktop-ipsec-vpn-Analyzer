@@ -1,8 +1,9 @@
 const { app, BrowserWindow, ipcMain, Notification } = require('electron');
 const path = require('path');
-const sudo = require('sudo-prompt');
+const { spawn } = require('child_process');
 
 let mainWindow;
+let backendProcess = null;
 const isDev = process.env.NODE_ENV === 'development';
 
 function createWindow() {
@@ -36,6 +37,7 @@ function createWindow() {
 
 app.whenReady().then(() => {
   createWindow();
+  launchBackend();  // Auto-launch backend on startup
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -44,11 +46,30 @@ app.whenReady().then(() => {
   });
 });
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
+// Kill backend when app quits
+app.on('will-quit', () => {
+  if (backendProcess) {
+    backendProcess.kill();
+    backendProcess = null;
   }
 });
+
+// Auto-launch backend.exe with admin privileges (Dev Only)
+function launchBackend() {
+  if (app.isPackaged) {
+    // In production, the backend is a Windows Service running as SYSTEM
+    // We don't need to launch it here!
+    return;
+  }
+
+  // Development: spawn python directly
+  const repoRoot = path.join(__dirname, '..', '..');
+  const exePath = path.join(repoRoot, 'backend', 'venv', 'Scripts', 'python.exe');
+  const mainScript = path.join(repoRoot, 'backend', 'api', 'main.py');
+  
+  backendProcess = spawn(exePath, [mainScript], { detached: false });
+  backendProcess.on('error', (err) => console.error('Backend error:', err));
+}
 
 // IPC Handlers for frameless window controls
 ipcMain.on('window:minimize', () => mainWindow?.minimize());
@@ -61,38 +82,10 @@ ipcMain.on('window:maximize', () => {
 });
 ipcMain.on('window:close', () => mainWindow?.close());
 
-// IPC Handler to start backend with admin privileges
-ipcMain.handle('backend:start', async (event) => {
-  return new Promise((resolve, reject) => {
-    const options = {
-      name: 'IPsec VPN Analyzer',
-    };
-    
-    let command;
-    
-    if (app.isPackaged) {
-      // In production, the compiled backend.exe is bundled in resources/backend
-      const exePath = path.join(process.resourcesPath, 'backend', process.platform === 'win32' ? 'backend.exe' : 'backend');
-      command = `"${exePath}"`;
-    } else {
-      // In development, use the local virtual environment
-      const repoRoot = path.join(__dirname, '..', '..');
-      const isWin = process.platform === 'win32';
-      const pythonPath = path.join(repoRoot, 'backend', isWin ? 'venv/Scripts/python.exe' : 'venv/bin/python');
-      const mainScript = path.join(repoRoot, 'backend', 'api', 'main.py');
-      command = `"${pythonPath}" "${mainScript}"`;
-    }
-    
-    sudo.exec(command, options, (error, stdout, stderr) => {
-      if (error) {
-        console.error('Sudo prompt error:', error);
-        reject(error.message);
-        return;
-      }
-      console.log('Backend stdout:', stdout);
-      resolve(true);
-    });
-  });
+// IPC Handler to manually restart backend if needed
+ipcMain.handle('backend:start', async () => {
+  launchBackend();
+  return true;
 });
 
 // IPC Handler for OS desktop notifications

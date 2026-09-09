@@ -8,10 +8,12 @@ import {
   Server, 
   SlidersHorizontal,
   Bell,
-  Search,
   CheckCircle2,
   Lock,
-  Globe2
+  Globe2,
+  Minus,
+  Square,
+  X
 } from 'lucide-react';
 
 export const FloatingShell = ({ 
@@ -24,7 +26,6 @@ export const FloatingShell = ({
   activeTunnelCount,
   totalBandwidth
 }) => {
-  const [searchQuery, setSearchQuery] = useState('');
   const [notificationOpen, setNotificationOpen] = useState(false);
 
   return (
@@ -39,11 +40,13 @@ export const FloatingShell = ({
       {/* Outer Floating Application Shell */}
       <div className="floating-shell rounded-[24px] md:rounded-[30px] flex-1 flex flex-col z-10 max-w-[1720px] mx-auto w-full border border-white/[0.09]">
         
-        {/* Mirror Specular Sheen Top Header Bar */}
-        <header className="specular-bar px-5 py-3.5 flex flex-wrap items-center justify-between gap-4 z-20">
-          
+        {/* Mirror Specular Sheen Top Header Bar — draggable for frameless window */}
+        <header
+          className="specular-bar px-5 py-3.5 flex flex-wrap items-center justify-between gap-4 z-20"
+          style={{ WebkitAppRegion: 'drag' }}
+        >
           {/* Brand & Connection Matrix Title */}
-          <div className="flex items-center gap-3.5">
+          <div className="flex items-center gap-3.5" style={{ WebkitAppRegion: 'no-drag' }}>
             <div className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600/30 to-cyan-500/20 border border-cyan-400/40 shadow-[0_0_20px_rgba(0,210,255,0.25)]">
               <ShieldCheck className="w-5 h-5 text-cyan-400" />
               <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
@@ -68,19 +71,8 @@ export const FloatingShell = ({
           </div>
 
           {/* Quick System Telemetry Pills & Global Search */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3" style={{ WebkitAppRegion: 'no-drag' }}>
             
-            {/* Search Input */}
-            <div className="relative hidden md:block">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input 
-                type="text" 
-                placeholder="Search tunnels, IPs, endpoints..." 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-slate-900/60 border border-white/10 text-xs text-slate-200 placeholder-slate-500 rounded-lg pl-8 pr-3 py-1.5 w-56 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all font-mono"
-              />
-            </div>
 
             {/* Live Data Ticker Toggle */}
             <button
@@ -133,6 +125,34 @@ export const FloatingShell = ({
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Window Controls — minimize, maximize, close */}
+            <div
+              className="flex items-center gap-1 ml-2"
+              style={{ WebkitAppRegion: 'no-drag' }}
+            >
+              <button
+                onClick={() => window.electronAPI?.minimize()}
+                title="Minimize"
+                className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <Minus className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => window.electronAPI?.maximize()}
+                title="Maximize"
+                className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <Square className="w-3 h-3" />
+              </button>
+              <button
+                onClick={() => window.electronAPI?.close()}
+                title="Close"
+                className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-red-500/80 transition-colors"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
             </div>
 
           </div>

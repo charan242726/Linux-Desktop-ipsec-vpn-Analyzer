@@ -9,7 +9,7 @@ from backend.capture.capture_thread import start_capture_thread
 from backend.worker.worker_thread import start_worker_thread
 from backend.services.ml_engine import load_model
 from backend.database.db import init_db
-from backend.api.routes import status, sessions, reports, pcap
+from backend.api.routes import status, sessions, reports, pcap, system_stats
 
 logging.basicConfig(
     level=logging.INFO,
@@ -54,6 +54,7 @@ app.include_router(status.router)
 app.include_router(sessions.router)
 app.include_router(reports.router)
 app.include_router(pcap.router)
+app.include_router(system_stats.router)
 
 if __name__ == "__main__":
     import uvicorn

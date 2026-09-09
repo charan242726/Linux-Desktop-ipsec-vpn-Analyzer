@@ -6,12 +6,7 @@ import {
   Globe, 
   ShieldAlert, 
   FileText, 
-  Settings, 
-  Cpu, 
-  HardDrive,
-  Layers,
-  LogOut,
-  ChevronRight,
+  Cpu,
   Sparkles
 } from 'lucide-react';
 
@@ -110,53 +105,9 @@ export const SidebarNav = ({ activeNav, setActiveNav }) => {
           </div>
         </div>
 
-        {/* Protocol Shortcuts */}
-        <div>
-          <div className="px-3 text-[10px] font-mono font-semibold tracking-wider text-slate-500 uppercase mb-2">
-            VPN MODES
-          </div>
-          <div className="grid grid-cols-2 gap-1.5 text-xs font-mono">
-            <div className="p-2 rounded-lg bg-slate-900/40 border border-white/5 text-center text-slate-300 hover:border-cyan-500/30 transition-colors cursor-pointer">
-              <span className="text-[10px] text-cyan-400 block font-semibold">IPsec / IKEv2</span>
-              <span className="text-[9px] text-slate-500">24 Tunnels</span>
-            </div>
-            <div className="p-2 rounded-lg bg-slate-900/20 border border-white/5 text-center text-slate-400 hover:border-slate-700 transition-colors cursor-pointer">
-              <span className="text-[10px] text-slate-400 block font-semibold">WireGuard</span>
-              <span className="text-[9px] text-slate-600">Standby</span>
-            </div>
-          </div>
-        </div>
 
       </div>
 
-      {/* Lower Profile & System Actions */}
-      <div className="pt-4 border-t border-white/5 space-y-3">
-        
-        {/* User Account / Node Owner */}
-        <div className="flex items-center gap-3 p-2 rounded-xl bg-slate-900/50 border border-white/5 hover:border-white/15 transition-all cursor-pointer">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-600 to-cyan-400 flex items-center justify-center font-mono font-bold text-xs text-white shadow-[0_0_12px_rgba(0,210,255,0.3)]">
-            OP
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-xs font-semibold text-slate-200 truncate">SecOps Gateway</div>
-            <div className="text-[10px] font-mono text-slate-400 truncate">admin@aero-vpn.internal</div>
-          </div>
-          <ChevronRight className="w-4 h-4 text-slate-500" />
-        </div>
-
-        {/* Quick Settings & Help */}
-        <div className="flex items-center justify-between text-xs text-slate-400 px-1">
-          <button className="flex items-center gap-1.5 hover:text-slate-200 transition-colors">
-            <Settings className="w-3.5 h-3.5 text-slate-500" />
-            <span>Config</span>
-          </button>
-          <button className="flex items-center gap-1.5 hover:text-red-400 transition-colors">
-            <LogOut className="w-3.5 h-3.5 text-slate-500" />
-            <span>Disconnect</span>
-          </button>
-        </div>
-
-      </div>
 
     </aside>
   );

@@ -4,6 +4,7 @@ import time
 from queue import Empty
 from backend.core.shared import app_state, packet_queue, stop_event
 from backend.core.state import VpnState
+from backend.capture.capture_thread import set_current_cipher
 
 # These imports will work once we stub out the services
 from backend.services.ike_parser import parse_ike
@@ -17,9 +18,11 @@ logger = logging.getLogger(__name__)
 # Track ESP packets for flow analysis
 _esp_buffer = []
 _last_packet_time = None
+_last_bw_tick = time.time()  # bandwidth computation interval
 
-INACTIVITY_WARN_SECONDS = 10   # flag as "quiet"
-INACTIVITY_DISC_SECONDS = 60   # probable disconnect
+INACTIVITY_WARN_SECONDS = 10
+INACTIVITY_DISC_SECONDS = 60
+BW_TICK_SECONDS = 2  # how often to compute bandwidth
 _quiet_since = None
 _is_quiet = False
 
@@ -65,13 +68,21 @@ def _analyze_batch(ike_packets: list, esp_packets: list) -> dict:
         rule_results = run_rules(ike_meta)
         findings["ike"] = ike_meta
         findings["security_rules"] = rule_results
+        # Update cipher label for session peer tracking
+        cipher = ike_meta.get("encryption_algorithm", "unknown")
+        if cipher != "unknown":
+            set_current_cipher(cipher)
 
     # ESP flow analysis + ML
     if esp_packets:
         features = extract_esp_features(esp_packets)
         findings["esp_features"] = features
-        ml_result = classify_traffic(features)  # handles ML_AVAILABLE=False
+        ml_result = classify_traffic(features)
         findings["ml"] = ml_result
+        # Push latency estimate to SharedState
+        latency = features.get("avg_inter_arrival_ms", 0.0)
+        if latency > 0:
+            app_state.update_latency(latency)
 
     findings["risk_level"] = _compute_risk(findings)
     return findings
@@ -90,7 +101,7 @@ def _compute_risk(findings: dict) -> str:
 
 def run_worker():
     """Entry point for Thread 3."""
-    global _last_packet_time
+    global _last_packet_time, _last_bw_tick
     ike_buffer = []
     esp_buffer = []
     total_esp_count = 0
@@ -116,8 +127,8 @@ def run_worker():
                 packet = packet_queue.get(timeout=1)
                 packet_queue.task_done()
                 _last_packet_time = time.time()
-                _reset_quiet()  # got a packet — not disconnected
-    
+                _reset_quiet()
+
                 from backend.services.ike_parser import classify_vpn_packet
                 ptype = classify_vpn_packet(packet)
                 if ptype in ("ike", "ike_natt"):
@@ -125,8 +136,14 @@ def run_worker():
                 elif ptype in ("esp_native", "esp_natt"):
                     esp_buffer.append(packet)
                     total_esp_count += 1
-    
+
             except Empty:
+                # Compute bandwidth every BW_TICK_SECONDS even when no packets
+                now = time.time()
+                if now - _last_bw_tick >= BW_TICK_SECONDS:
+                    app_state.compute_bandwidth()
+                    _last_bw_tick = now
+
                 if _check_disconnect(total_esp_count):
                     # finalize session
                     if ike_buffer or esp_buffer:
@@ -151,11 +168,14 @@ def run_worker():
                     esp_buffer.clear()
                     total_esp_count = 0
     
-            # Analyze every 30 packets or on timeout — don't wait for 1000s of packets
+            # Analyze every 30 packets — also compute bandwidth
             if len(ike_buffer) + len(esp_buffer) >= 30:
                 try:
                     findings = _analyze_batch(ike_buffer, esp_buffer)
                     app_state.update_findings(findings)
+                    # Also tick bandwidth
+                    app_state.compute_bandwidth()
+                    _last_bw_tick = time.time()
                     session_id = app_state.get_session()
                     if session_id:
                         save_findings(session_id, findings)

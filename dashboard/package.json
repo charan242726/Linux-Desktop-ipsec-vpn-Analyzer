@@ -46,10 +46,16 @@
     "appId": "com.sih.ipsecanalyzer",
     "productName": "IPsec VPN Analyzer",
     "directories": {
-      "output": "dist-electron"
+      "output": "dist-electron-final"
     },
     "win": {
       "target": "nsis"
+    },
+    "nsis": {
+      "include": "installer.nsh",
+      "perMachine": true,
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
     },
     "extraResources": [
       {
@@ -58,6 +64,10 @@
         "filter": [
           "**/*"
         ]
+      },
+      {
+        "from": "npcap-installer.exe",
+        "to": "npcap-installer.exe"
       }
     ]
   }

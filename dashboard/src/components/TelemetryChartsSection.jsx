@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { 
   Activity, 
   Layers, 
   Globe, 
-  Download
+  Download,
+  PauseCircle
 } from 'lucide-react';
 import { 
   ResponsiveContainer, 
@@ -15,8 +16,7 @@ import {
   CartesianGrid 
 } from 'recharts';
 
-export const TelemetryChartsSection = ({ chartData, edgeNodes }) => {
-  const [timeRange, setTimeRange] = useState('LIVE');
+export const TelemetryChartsSection = ({ chartData, edgeNodes, isLiveStream }) => {
 
   const defaultChartData = [
     { time: '11:00:00', inbound: 840, outbound: 620, latency: 11.2 },
@@ -32,6 +32,11 @@ export const TelemetryChartsSection = ({ chartData, edgeNodes }) => {
   ];
 
   const dataToUse = chartData && chartData.length > 0 ? chartData : defaultChartData;
+
+  // Bug 7 fix: compute live inbound/outbound from latest chart data point
+  const latest = dataToUse[dataToUse.length - 1] || {};
+  const liveInbound  = latest.inbound  ? (latest.inbound  / 1000).toFixed(2) : '0.00';
+  const liveOutbound = latest.outbound ? (latest.outbound / 1000).toFixed(2) : '0.00';
 
   const cipherData = [
     { name: 'AES-256-GCM', throughput: 1420, tunnels: 18, color: '#00d2ff' },
@@ -52,7 +57,7 @@ export const TelemetryChartsSection = ({ chartData, edgeNodes }) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-5">
       
-      {/* Chart Card 1: Primary Throughput Telemetry Stream (Electric Blue & Cyan Gradients) */}
+      {/* Chart Card 1: Primary Throughput Telemetry Stream */}
       <div className="mirror-card p-4 lg:col-span-2 flex flex-col justify-between">
         
         {/* Card Header Controls */}
@@ -71,32 +76,25 @@ export const TelemetryChartsSection = ({ chartData, edgeNodes }) => {
             </div>
           </div>
 
-          {/* Controls: Time range pills & Export */}
+          {/* Controls: Download & LIVE indicator */}
           <div className="flex items-center gap-2">
-            <div className="flex items-center p-0.5 rounded-lg bg-slate-900/60 border border-white/10 text-[10px] font-mono">
-              {['1H', '6H', '24H', 'LIVE'].map((range) => (
-                <button
-                  key={range}
-                  onClick={() => setTimeRange(range)}
-                  className={`px-2.5 py-1 rounded-md transition-all ${
-                    timeRange === range
-                      ? 'bg-gradient-to-r from-blue-600/40 to-cyan-500/30 text-white border border-cyan-400/40 shadow-sm'
-                      : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  {range}
-                </button>
-              ))}
-            </div>
-
+            <span className="px-2.5 py-1 rounded-md bg-cyan-500/10 border border-cyan-400/30 text-cyan-300 text-[10px] font-mono">
+              LIVE
+            </span>
             <button className="p-1.5 rounded-lg bg-slate-900/60 border border-white/10 text-slate-400 hover:text-white text-xs">
               <Download className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
 
-        {/* Integrated Area Chart */}
-        <div className="h-64 w-full pt-2">
+        {/* Bug 8 fix: Show paused overlay when stream is not live */}
+        <div className="relative h-64 w-full pt-2">
+          {isLiveStream === false && (
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/50 rounded-xl backdrop-blur-sm gap-2">
+              <PauseCircle className="w-8 h-8 text-slate-400" />
+              <span className="text-xs font-mono text-slate-400">STREAM PAUSED — Click LIVE STREAMING to resume</span>
+            </div>
+          )}
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={dataToUse} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <defs>
@@ -157,16 +155,16 @@ export const TelemetryChartsSection = ({ chartData, edgeNodes }) => {
           </ResponsiveContainer>
         </div>
 
-        {/* Footer Metrics Ticker */}
+        {/* Bug 7 fix: Footer values now derived from live chart data */}
         <div className="flex flex-wrap items-center justify-between text-[11px] font-mono text-slate-400 pt-3 border-t border-white/5 gap-2">
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-[0_0_8px_#00d2ff]" />
-              Inbound: <strong className="text-slate-100">1.48 Gbps</strong>
+              Inbound: <strong className="text-slate-100">{liveInbound} Gbps</strong>
             </span>
             <span className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-blue-600 shadow-[0_0_8px_#0066ff]" />
-              Outbound: <strong className="text-slate-100">1.09 Gbps</strong>
+              Outbound: <strong className="text-slate-100">{liveOutbound} Gbps</strong>
             </span>
           </div>
 

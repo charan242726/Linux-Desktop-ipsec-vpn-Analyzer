@@ -39,8 +39,17 @@ export const HeroMetricsGrid = ({ metricsData }) => {
             </div>
           </div>
 
-          <div className="px-2 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-mono flex items-center gap-1">
-            <ArrowUpRight className="w-3 h-3" /> 100% ONLINE
+          {/* Bug 3 fix: badge is now dynamic based on real activeTunnels count */}
+          <div className={`px-2 py-1 rounded-md text-[10px] font-mono flex items-center gap-1 border ${
+            activeTunnels > 0
+              ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+              : 'bg-red-500/10 border-red-500/20 text-red-400'
+          }`}>
+            <ArrowUpRight className="w-3 h-3" />
+            {activeTunnels > 0
+              ? `${Math.round((activeTunnels / 24) * 100)}% ONLINE`
+              : 'OFFLINE'
+            }
           </div>
         </div>
 

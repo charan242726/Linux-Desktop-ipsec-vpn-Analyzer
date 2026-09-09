@@ -1,5 +1,6 @@
-Write-Host "Installing PyInstaller..."
+Write-Host "Installing dependencies..."
 .\backend\venv\Scripts\pip.exe install pyinstaller
+.\backend\venv\Scripts\pip.exe install -r requirements.txt
 
 Write-Host "Cleaning previous builds..."
 Remove-Item -Recurse -Force .\build -ErrorAction Ignore
@@ -25,10 +26,15 @@ Write-Host "Building backend with PyInstaller..."
     --hidden-import fpdf `
     --hidden-import sqlite3 `
     --hidden-import passlib `
+    --hidden-import win32timezone `
+    --hidden-import win32serviceutil `
+    --hidden-import win32service `
+    --hidden-import win32event `
+    --hidden-import servicemanager `
     --add-data "backend/templates;backend/templates" `
     --add-data "ml/model;ml/model" `
     --distpath .\backend\dist `
     --clean `
-    .\backend\api\main.py
+    .\windows_service.py
 
 Write-Host "Done! Executable is at backend\dist\backend.exe"

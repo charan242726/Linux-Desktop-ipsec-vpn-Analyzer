@@ -96,6 +96,32 @@ All bundled into a single `.exe` installer — no Python, no command line needed
 
 ---
 
+## 🐧 Linux Installation & Setup
+
+1. **Clone the repository:**
+   ```bash
+   git clone -b linux-desktop-app https://github.com/LalThota/vpn-ipsec-analyzer.git
+   cd vpn-ipsec-analyzer
+   ```
+
+2. **Install the Background Daemon (Requires `sudo`):**
+   ```bash
+   chmod +x install.sh
+   sudo ./install.sh
+   ```
+   *This automatically creates a virtual environment, installs Python dependencies, and starts the `vpnguard-analyzer` systemd daemon in the background to silently monitor for VPN traffic.*
+
+3. **Run the UI Application:**
+   ```bash
+   cd dashboard
+   npm install
+   npm run build
+   npx electron-builder --linux
+   ```
+   *Double-click the generated `.AppImage` in `dashboard/dist-electron-final/`. The app will launch and can be minimized to the system tray.*
+
+---
+
 ## 🔄 Complete User Workflow
 
 ```

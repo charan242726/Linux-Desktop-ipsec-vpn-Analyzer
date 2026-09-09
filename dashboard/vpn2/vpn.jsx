@@ -27,6 +27,7 @@ export default function VpnDashboard() {
 
   const [engineState, setEngineState] = useState('DISCONNECTED');
   const prevStateRef = useRef('DISCONNECTED');
+  const notifiedRulesRef = useRef(new Set());
   const [backendFindings, setBackendFindings] = useState(null);
   const [terminalLogs, setTerminalLogs] = useState([]);
 
@@ -68,6 +69,7 @@ export default function VpnDashboard() {
           // Trigger OS Notification when state transitions to VPN_DETECTED
           if (state === 'VPN_DETECTED' && prevStateRef.current !== 'VPN_DETECTED') {
             if (window.electronAPI) {
+              if (window.electronAPI.wakeUp) window.electronAPI.wakeUp();
               window.electronAPI.sendNotification({
                 title: 'VPN Connection Detected',
                 body: 'IPsec VPN traffic detected. Click here to open the Analyzer and start inspection.',
@@ -110,6 +112,17 @@ export default function VpnDashboard() {
             if (data.findings.security_rules) {
               Object.entries(data.findings.security_rules).forEach(([rule, info]) => {
                 newLogs.push(`[${now}] [SECURITY-ALERT] ${rule}: ${info.message}`);
+                
+                if (!notifiedRulesRef.current.has(rule)) {
+                  notifiedRulesRef.current.add(rule);
+                  if (window.electronAPI) {
+                    window.electronAPI.sendNotification({
+                      title: 'Security Vulnerability Detected',
+                      body: `Flaw: ${rule} - ${info.message}`,
+                      urgency: 'critical'
+                    });
+                  }
+                }
               });
             }
             if (data.findings.ike?.ike_version && data.findings.ike.ike_version !== 'unknown') {

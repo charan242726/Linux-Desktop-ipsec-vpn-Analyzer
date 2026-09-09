@@ -54,21 +54,35 @@ app.on('will-quit', () => {
   }
 });
 
-// Auto-launch backend.exe with admin privileges (Dev Only)
-function launchBackend() {
-  if (app.isPackaged) {
-    // In production, the backend is a Windows Service running as SYSTEM
-    // We don't need to launch it here!
-    return;
-  }
+const sudo = require('sudo-prompt');
 
-  // Development: spawn python directly
-  const repoRoot = path.join(__dirname, '..', '..');
-  const exePath = path.join(repoRoot, 'backend', 'venv', 'Scripts', 'python.exe');
-  const mainScript = path.join(repoRoot, 'backend', 'api', 'main.py');
+// Auto-launch backend with admin privileges (Required for Linux scapy packet capture)
+function launchBackend() {
+  const options = {
+    name: 'IPsec VPN Analyzer',
+  };
   
-  backendProcess = spawn(exePath, [mainScript], { detached: false });
-  backendProcess.on('error', (err) => console.error('Backend error:', err));
+  let command;
+  if (app.isPackaged) {
+    // In production AppImage, launch the bundled backend executable
+    const exePath = path.join(process.resourcesPath, 'backend', 'backend');
+    command = `"${exePath}"`;
+  } else {
+    // Development: spawn python using local virtual environment
+    const repoRoot = path.join(__dirname, '..', '..');
+    const pythonPath = path.join(repoRoot, 'backend', 'venv', 'bin', 'python');
+    const mainScript = path.join(repoRoot, 'backend', 'api', 'main.py');
+    command = `"${pythonPath}" "${mainScript}"`;
+  }
+  
+  // Use sudo-prompt to elevate privileges so scapy can bind to interfaces
+  sudo.exec(command, options, (error, stdout, stderr) => {
+    if (error) {
+      console.error('Sudo prompt error or backend crashed:', error);
+      return;
+    }
+    console.log('Backend stdout:', stdout);
+  });
 }
 
 // IPC Handlers for frameless window controls

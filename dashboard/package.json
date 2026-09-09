@@ -48,14 +48,9 @@
     "directories": {
       "output": "dist-electron-final"
     },
-    "win": {
-      "target": "nsis"
-    },
-    "nsis": {
-      "include": "installer.nsh",
-      "perMachine": true,
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+    "linux": {
+      "target": "AppImage",
+      "category": "Network"
     },
     "extraResources": [
       {

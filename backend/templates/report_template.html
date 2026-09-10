@@ -317,6 +317,11 @@
             <td>{{ "Handshake was successfully captured." if ike else "No handshake was captured in this session." }}</td>
         </tr>
         <tr>
+            <td>IKE version</td>
+            <td>{{ ike.ike_version if ike else "NOT DETERMINED" }}</td>
+            <td>{{ "Version identified from IKE SA." if ike else "Insufficient negotiation evidence in this capture." }}</td>
+        </tr>
+        <tr>
             <td>ESP</td>
             <td>DETECTED</td>
             <td>Encrypted payload transport observed via IP protocol 50.</td>
@@ -414,6 +419,24 @@
         <tr>
             <td>Encryption</td>
             <td>{{ ike.encryption_algorithm if ike else "Not determined" }}</td>
+            <td>{{ "Negotiated via IKE" if ike else "Negotiation data absent" }}</td>
+            <td>High</td>
+        </tr>
+        <tr>
+            <td>Authentication</td>
+            <td>{{ ike.auth_algorithm if ike else "Not determined" }}</td>
+            <td>{{ "Negotiated via IKE" if ike else "Negotiation data absent" }}</td>
+            <td>High</td>
+        </tr>
+        <tr>
+            <td>Key Exchange (DH)</td>
+            <td>{{ "Group " ~ ike.dh_group if ike and ike.dh_group else "Not determined" }}</td>
+            <td>{{ "Negotiated via IKE" if ike else "Negotiation data absent" }}</td>
+            <td>High</td>
+        </tr>
+        <tr>
+            <td>Forward Secrecy (PFS)</td>
+            <td>{{ ike.pfs_enabled if ike else "Not determined" }}</td>
             <td>{{ "Negotiated via IKE" if ike else "Negotiation data absent" }}</td>
             <td>High</td>
         </tr>

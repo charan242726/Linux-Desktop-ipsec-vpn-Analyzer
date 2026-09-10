@@ -210,7 +210,7 @@ export const TelemetryChartsSection = ({ chartData, edgeNodes, isLiveStream, ike
             EDGE NODE LATENCY MATRIX
           </span>
 
-          <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+          <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1 ml-[3px]">
             {nodesToUse.length > 0 ? (
               nodesToUse.map((node) => (
                 <div 

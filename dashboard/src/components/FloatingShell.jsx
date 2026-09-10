@@ -40,7 +40,7 @@ export const FloatingShell = ({
       </div>
 
       {/* Outer Floating Application Shell */}
-      <div className="floating-shell rounded-[24px] md:rounded-[30px] flex-1 flex flex-col z-10 max-w-[1720px] mx-auto w-full border border-white/[0.09]">
+      <div className="floating-shell rounded-[24px] md:rounded-[30px] flex-1 flex flex-col z-10 mx-auto w-full border border-white/[0.09]">
         
         {/* Mirror Specular Sheen Top Header Bar — draggable for frameless window */}
         <header

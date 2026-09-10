@@ -59,7 +59,7 @@ def _process_packet(packet):
     if not (is_ike or is_esp or is_natt):
         return  # ignore non-VPN traffic
 
-    if state == VpnState.IDLE:
+    if state in [VpnState.IDLE, VpnState.DISCONNECTED]:
         from backend.database.db import create_session
         session_id = create_session()
         app_state.set_session(session_id)

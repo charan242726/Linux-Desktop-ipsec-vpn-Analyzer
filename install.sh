@@ -52,7 +52,7 @@ chown -R $USERNAME:$USERNAME $PROJECT_DIR
 
 # Run pip as the standard user to avoid root pip warnings
 echo "📦 Installing Python packages..."
-sudo -u $USERNAME ./pandas_env/bin/pip install weasyprint jinja2 psutil scapy fastapi uvicorn
+sudo -u $USERNAME ./pandas_env/bin/pip install weasyprint jinja2 psutil scapy fastapi uvicorn scikit-learn pandas numpy joblib
 
 # 4. Setup Systemd Service
 echo "⚙️ Configuring background systemd service..."
@@ -110,6 +110,5 @@ echo "✅ VPNGUARD Desktop Shortcut added to your application launcher!"
 
 echo ""
 echo "🎉 INSTALLATION COMPLETE! 🎉"
-echo "You can now launch 'VPNGUARD' from your Linux application menu,"
-echo "or navigate to the dashboard directory and run 'npm start'."
-echo "The background analysis engine is already running securely as a service."
+echo "You can now launch 'VPNGUARD' directly from your Linux application menu (search for VPNGUARD)."
+echo "The background machine learning engine is already running securely as a background service."

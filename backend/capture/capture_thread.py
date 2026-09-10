@@ -119,7 +119,7 @@ def run_capture():
         while not stop_event.is_set():
             app_state.update_capture_heartbeat()
             sniff(
-                iface="br-vpnguard",
+                iface="virbr-lab0",
                 filter=CAPTURE_FILTER,
                 prn=_process_packet,
                 store=False,

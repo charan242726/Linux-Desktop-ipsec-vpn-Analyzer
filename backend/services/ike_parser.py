@@ -77,7 +77,7 @@ def _extract_proposals(raw_bytes: bytes) -> dict:
         "encryption_algorithm": "unknown",
         "auth_algorithm": "unknown",
         "dh_group": 0,
-        "pfs_enabled": False,
+        "pfs_enabled": "NOT_DETERMINED",
         "sa_lifetime_seconds": 86400
     }
 
@@ -109,23 +109,44 @@ def _extract_proposals(raw_bytes: bytes) -> dict:
     return result
 
 def _parse_sa_payload(data: bytes, result: dict):
-    """Parse transforms inside SA payload."""
+    """Parse Proposals and their Transforms inside SA payload."""
     offset = 0
     while offset < len(data) - 8:
-        # Transform: last(1) + reserved(1) + length(2) + type(1) + reserved(1) + id(2)
-        transform_type = data[offset + 4] if offset + 4 < len(data) else 0
-        transform_id = int.from_bytes(data[offset+6:offset+8], 'big') if offset + 7 < len(data) else 0
-        transform_len = int.from_bytes(data[offset+2:offset+4], 'big') if offset + 3 < len(data) else 8
-
-        if transform_type == 1:  # Encryption
-            result["encryption_algorithm"] = ENCR_MAP.get(transform_id, f"unknown({transform_id})")
-        elif transform_type == 2:  # PRF / Auth
-            result["auth_algorithm"] = AUTH_MAP.get(transform_id, f"unknown({transform_id})")
-        elif transform_type == 4:  # DH Group
-            result["dh_group"] = transform_id
-            result["pfs_enabled"] = transform_id > 0
-
-        offset += max(transform_len, 8)
+        # Proposal header: last(1) + reserved(1) + length(2) + num(1) + proto(1) + spi_size(1) + transforms(1)
+        proposal_len = int.from_bytes(data[offset+2:offset+4], 'big')
+        if proposal_len == 0 or offset + proposal_len > len(data):
+            break
+            
+        protocol_id = data[offset+5]
+        spi_size = data[offset+6]
+        
+        # ESP (proto=3) doesn't automatically mean PFS is disabled unless we parse the whole SA
+        # We leave it NOT_DETERMINED until we find a DH transform or definitively prove there isn't one
+        # in a complete, cleartext ESP proposal (which requires decryption of IKE_AUTH)
+        
+        transform_offset = offset + 8 + spi_size
+        
+        while transform_offset < offset + proposal_len - 8:
+            t_len = int.from_bytes(data[transform_offset+2:transform_offset+4], 'big')
+            if t_len < 8:
+                break
+            t_type = data[transform_offset+4]
+            t_id = int.from_bytes(data[transform_offset+6:transform_offset+8], 'big')
+            
+            if t_type == 1:  # Encryption
+                result["encryption_algorithm"] = ENCR_MAP.get(t_id, f"unknown({t_id})")
+            elif t_type == 2:  # PRF
+                pass # PRF is distinct from Auth (INTEG)
+            elif t_type == 3:  # INTEG (Auth)
+                result["auth_algorithm"] = AUTH_MAP.get(t_id, f"unknown({t_id})")
+            elif t_type == 4:  # DH Group
+                result["dh_group"] = t_id
+                if protocol_id == 3:
+                    result["pfs_enabled"] = "ENABLED"
+                
+            transform_offset += t_len
+            
+        offset += proposal_len
 
 
 def parse_ike(packets: list) -> dict:
@@ -139,7 +160,7 @@ def parse_ike(packets: list) -> dict:
         "auth_algorithm": "unknown",       # integrity/PRF only — observable
         "authentication_method": "unobservable",  # PSK/cert inside IKE_AUTH — encrypted
         "dh_group": 0,
-        "pfs_enabled": False,
+        "pfs_enabled": "NOT_DETERMINED",
         "sa_lifetime_seconds": 86400,
         "mode": "tunnel",
         "packet_count": len(packets),

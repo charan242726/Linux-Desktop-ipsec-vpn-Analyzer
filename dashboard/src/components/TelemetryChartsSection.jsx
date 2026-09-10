@@ -16,19 +16,11 @@ import {
   CartesianGrid 
 } from 'recharts';
 
-export const TelemetryChartsSection = ({ chartData, edgeNodes, isLiveStream }) => {
+export const TelemetryChartsSection = ({ chartData, edgeNodes, isLiveStream, ikeFindings }) => {
 
   const defaultChartData = [
-    { time: '11:00:00', inbound: 840, outbound: 620, latency: 11.2 },
-    { time: '11:00:05', inbound: 920, outbound: 710, latency: 12.8 },
-    { time: '11:00:10', inbound: 1050, outbound: 790, latency: 14.1 },
-    { time: '11:00:15', inbound: 1180, outbound: 850, latency: 12.0 },
-    { time: '11:00:20', inbound: 1120, outbound: 810, latency: 11.8 },
-    { time: '11:00:25', inbound: 1250, outbound: 910, latency: 13.4 },
-    { time: '11:00:30', inbound: 1340, outbound: 980, latency: 12.2 },
-    { time: '11:00:35', inbound: 1290, outbound: 940, latency: 11.9 },
-    { time: '11:00:40', inbound: 1420, outbound: 1020, latency: 12.6 },
-    { time: '11:00:45', inbound: 1480, outbound: 1090, latency: 12.4 },
+    { time: '11:00:00', inbound: 0, outbound: 0, latency: 0 },
+    { time: '11:00:05', inbound: 0, outbound: 0, latency: 0 },
   ];
 
   const dataToUse = chartData && chartData.length > 0 ? chartData : defaultChartData;
@@ -38,21 +30,12 @@ export const TelemetryChartsSection = ({ chartData, edgeNodes, isLiveStream }) =
   const liveInbound  = latest.inbound  ? (latest.inbound  / 1000).toFixed(2) : '0.00';
   const liveOutbound = latest.outbound ? (latest.outbound / 1000).toFixed(2) : '0.00';
 
-  const cipherData = [
-    { name: 'AES-256-GCM', throughput: 1420, tunnels: 18, color: '#00d2ff' },
-    { name: 'ChaCha20-Poly1305', throughput: 380, tunnels: 4, color: '#0066ff' },
-    { name: 'AES-128-GCM', throughput: 140, tunnels: 2, color: '#6366f1' },
-  ];
+  // Build cipherData from actual IKE findings
+  const cipherData = ikeFindings && ikeFindings.encryption_algorithm && ikeFindings.encryption_algorithm !== "unknown"
+    ? [{ name: ikeFindings.encryption_algorithm, throughput: latest.inbound || 0, tunnels: 1, color: '#00d2ff' }]
+    : [];
 
-  const defaultEdgeNodes = [
-    { name: 'FRA-EHR-01', region: 'Frankfurt, DE', ping: '8 ms', status: 'ONLINE', tunnels: 8, load: '32%' },
-    { name: 'LND-THN-04', region: 'London, UK', ping: '14 ms', status: 'ONLINE', tunnels: 5, load: '45%' },
-    { name: 'NYC-JFK-02', region: 'New York, US', ping: '68 ms', status: 'ONLINE', tunnels: 6, load: '58%' },
-    { name: 'TYO-HND-01', region: 'Tokyo, JP', ping: '184 ms', status: 'ONLINE', tunnels: 3, load: '24%' },
-    { name: 'SGP-SIN-03', region: 'Singapore, SG', ping: '162 ms', status: 'ONLINE', tunnels: 2, load: '19%' },
-  ];
-
-  const nodesToUse = edgeNodes && edgeNodes.length > 0 ? edgeNodes : defaultEdgeNodes;
+  const nodesToUse = edgeNodes && edgeNodes.length > 0 ? edgeNodes : [];
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-5">
@@ -195,24 +178,30 @@ export const TelemetryChartsSection = ({ chartData, edgeNodes, isLiveStream }) =
 
         {/* Cipher Breakdown Bar List */}
         <div className="space-y-3">
-          {cipherData.map((cipher) => (
-            <div key={cipher.name} className="space-y-1">
-              <div className="flex justify-between text-[11px] font-mono">
-                <span className="text-slate-200">{cipher.name}</span>
-                <span className="text-slate-400">{cipher.tunnels} Tunnels</span>
+          {cipherData.length > 0 ? (
+            cipherData.map((cipher) => (
+              <div key={cipher.name} className="space-y-1">
+                <div className="flex justify-between text-[11px] font-mono">
+                  <span className="text-slate-200">{cipher.name}</span>
+                  <span className="text-slate-400">{cipher.tunnels} Tunnels</span>
+                </div>
+                <div className="w-full bg-slate-900/80 h-2 rounded-full overflow-hidden p-0.5 border border-white/10">
+                  <div 
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{ 
+                      width: `${Math.min((cipher.throughput / 1500) * 100, 100)}%`,
+                      backgroundColor: cipher.color,
+                      boxShadow: `0 0 10px ${cipher.color}80`
+                    }} 
+                  />
+                </div>
               </div>
-              <div className="w-full bg-slate-900/80 h-2 rounded-full overflow-hidden p-0.5 border border-white/10">
-                <div 
-                  className="h-full rounded-full transition-all duration-500"
-                  style={{ 
-                    width: `${(cipher.throughput / 1500) * 100}%`,
-                    backgroundColor: cipher.color,
-                    boxShadow: `0 0 10px ${cipher.color}80`
-                  }} 
-                />
-              </div>
+            ))
+          ) : (
+            <div className="text-[10px] font-mono text-slate-500 italic text-center py-4 border border-dashed border-white/10 rounded-lg">
+              Awaiting Cryptographic Telemetry...
             </div>
-          ))}
+          )}
         </div>
 
         {/* Global Edge Gateways Grid */}
@@ -222,25 +211,31 @@ export const TelemetryChartsSection = ({ chartData, edgeNodes, isLiveStream }) =
           </span>
 
           <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
-            {nodesToUse.map((node) => (
-              <div 
-                key={node.name}
-                className="flex items-center justify-between p-2 rounded-lg bg-slate-900/40 border border-white/5 hover:border-cyan-500/20 transition-all text-xs font-mono"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="pulse-beacon pulse-beacon-emerald" />
-                  <div>
-                    <span className="text-slate-200 font-medium block text-[11px]">{node.name}</span>
-                    <span className="text-[9px] text-slate-500">{node.region}</span>
+            {nodesToUse.length > 0 ? (
+              nodesToUse.map((node) => (
+                <div 
+                  key={node.name}
+                  className="flex items-center justify-between p-2 rounded-lg bg-slate-900/40 border border-white/5 hover:border-cyan-500/20 transition-all text-xs font-mono"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="pulse-beacon pulse-beacon-emerald" />
+                    <div>
+                      <span className="text-slate-200 font-medium block text-[11px]">{node.name}</span>
+                      <span className="text-[9px] text-slate-500">{node.region}</span>
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <span className="text-cyan-400 font-bold text-[11px] block">{node.ping}</span>
+                    <span className="text-[9px] text-slate-500">{node.tunnels} Tunnels</span>
                   </div>
                 </div>
-
-                <div className="text-right">
-                  <span className="text-cyan-400 font-bold text-[11px] block">{node.ping}</span>
-                  <span className="text-[9px] text-slate-500">{node.tunnels} Tunnels</span>
-                </div>
+              ))
+            ) : (
+              <div className="text-[10px] font-mono text-slate-500 italic text-center py-4 border border-dashed border-white/10 rounded-lg">
+                No active edge nodes detected
               </div>
-            ))}
+            )}
           </div>
         </div>
 

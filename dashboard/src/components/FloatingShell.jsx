@@ -13,7 +13,8 @@ import {
   Minus,
   Square,
   X,
-  Download
+  Download,
+  Terminal
 } from 'lucide-react';
 
 export const FloatingShell = ({ 
@@ -24,7 +25,8 @@ export const FloatingShell = ({
   setActiveNav,
   lastTickTime,
   activeTunnelCount,
-  totalBandwidth
+  totalBandwidth,
+  mlFindings
 }) => {
   const [notificationOpen, setNotificationOpen] = useState(false);
 
@@ -88,6 +90,15 @@ export const FloatingShell = ({
               <Activity className="w-3.5 h-3.5 text-cyan-400" />
               <span>AGGREGATE {totalBandwidth} GB/S</span>
             </div>
+
+            {/* ML Classification Badge */}
+            {mlFindings?.ml_available && (
+              <div className="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-500/10 border border-indigo-400/30 text-xs font-mono text-indigo-300 shadow-[0_0_10px_rgba(99,102,241,0.15)]">
+                <Terminal className="w-3.5 h-3.5" />
+                <span className="uppercase font-semibold">AI: {mlFindings.traffic_type || 'UNKNOWN'}</span>
+                <span className="text-indigo-400/60 ml-1">({Math.round((mlFindings.confidence || 0) * 100)}%)</span>
+              </div>
+            )}
 
             {/* Download Latest Report Button */}
             <button 

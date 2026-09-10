@@ -20,7 +20,8 @@ def run_rules(ike_meta: dict) -> dict:
             "detail": f"DH Group {dh} provides insufficient key strength"
         }
 
-    if not ike_meta.get("pfs_enabled", True):
+    pfs_status = ike_meta.get("pfs_enabled", "NOT_DETERMINED")
+    if pfs_status == "DISABLED":
         results["no_pfs"] = {
             "detected": True,
             "severity": "MEDIUM",

@@ -193,6 +193,7 @@ export default function VpnDashboard() {
       lastTickTime={lastTickTime}
       activeTunnelCount={tunnelCount}
       totalBandwidth={totalBandwidthGbps}
+      mlFindings={backendFindings?.ml}
     >
       {/* Sidebar Navigation */}
       <SidebarNav

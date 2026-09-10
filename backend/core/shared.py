@@ -66,7 +66,14 @@ class SharedState:
     def update_findings(self, findings: dict):
         with self._lock:
             for key, val in findings.items():
-                self._latest_findings[key] = val
+                if isinstance(val, dict) and key in self._latest_findings and isinstance(self._latest_findings[key], dict):
+                    # Deep merge to preserve earlier findings (like DH Group from IKE_SA_INIT) 
+                    # from being erased by later packets (like IKE_AUTH)
+                    for sub_key, sub_val in val.items():
+                        if sub_val not in ("unknown", 0, False, "NOT_DETERMINED", 86400):
+                            self._latest_findings[key][sub_key] = sub_val
+                else:
+                    self._latest_findings[key] = val
 
     def get_findings(self) -> dict:
         with self._lock:

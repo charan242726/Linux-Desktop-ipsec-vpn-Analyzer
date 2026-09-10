@@ -111,7 +111,7 @@ def _extract_proposals(raw_bytes: bytes) -> dict:
 def _parse_sa_payload(data: bytes, result: dict):
     """Parse Proposals and their Transforms inside SA payload."""
     offset = 0
-    while offset < len(data) - 8:
+    while offset <= len(data) - 8:
         # Proposal header: last(1) + reserved(1) + length(2) + num(1) + proto(1) + spi_size(1) + transforms(1)
         proposal_len = int.from_bytes(data[offset+2:offset+4], 'big')
         if proposal_len == 0 or offset + proposal_len > len(data):
@@ -126,7 +126,7 @@ def _parse_sa_payload(data: bytes, result: dict):
         
         transform_offset = offset + 8 + spi_size
         
-        while transform_offset < offset + proposal_len - 8:
+        while transform_offset <= offset + proposal_len - 8:
             t_len = int.from_bytes(data[transform_offset+2:transform_offset+4], 'big')
             if t_len < 8:
                 break

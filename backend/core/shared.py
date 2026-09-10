@@ -65,7 +65,8 @@ class SharedState:
     # ── Findings ───────────────────────────────────────────────────────────────
     def update_findings(self, findings: dict):
         with self._lock:
-            self._latest_findings = findings
+            for key, val in findings.items():
+                self._latest_findings[key] = val
 
     def get_findings(self) -> dict:
         with self._lock:
@@ -139,6 +140,8 @@ class SharedState:
                     "status": "ESTABLISHED",
                 }
             sess = self._sessions[remote_ip]
+            if cipher != "unknown":
+                sess["cipher"] = cipher
             sess["bytes"] += size
             sess["packet_count"] += 1
             sess["last_seen"] = time.time()

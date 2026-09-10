@@ -55,8 +55,8 @@ The installer automatically installs system dependencies (`libpcap`, `npm`, `pyt
 
 ### Step 1: Clone the Repository
 ```bash
-git clone https://github.com/your-username/ipsec-vpn-analyzer.git
-cd ipsec-vpn-analyzer
+git clone https://github.com/charan242726/Linux-Desktop-ipsec-vpn-Analyzer.git
+cd Linux-Desktop-ipsec-vpn-Analyzer
 ```
 
 ### Step 2: Run the Installer

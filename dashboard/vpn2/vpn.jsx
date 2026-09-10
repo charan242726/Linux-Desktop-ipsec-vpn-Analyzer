@@ -362,7 +362,7 @@ export default function VpnDashboard() {
               <div className="mt-4 p-4 rounded-xl bg-red-900/20 border border-red-500/20 space-y-2">
                  <span className="text-red-400 font-bold block">ACTIVE SECURITY ALERTS</span>
                  {Object.entries(backendFindings.security_rules).map(([rule, info]) => (
-                   <div key={rule} className="text-red-300">- {rule}: {info.message}</div>
+                   <div key={rule} className="text-red-300">- {rule}: {info.detail}</div>
                  ))}
               </div>
             )}

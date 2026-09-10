@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "electron:start": "cross-env NODE_ENV=development electron .",
-    "electron:dev": "concurrently -k \"npm run dev\" \"wait-on tcp:5173 && npm run electron:start\""
+    "electron:dev": "concurrently -k \"npm run dev\" \"wait-on tcp:5173 && npm run electron:start\"",
+    "start": "npm run electron:dev"
   },
   "dependencies": {
     "autoprefixer": "^10.5.5",

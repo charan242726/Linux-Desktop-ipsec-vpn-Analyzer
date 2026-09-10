@@ -80,7 +80,7 @@ def _analyze_batch(ike_packets: list, esp_packets: list) -> dict:
         ml_result = classify_traffic(features)
         findings["ml"] = ml_result
         # Push latency estimate to SharedState
-        latency = features.get("avg_inter_arrival_ms", 0.0)
+        latency = features.get("esp_mean_interarrival", 0.0)
         if latency > 0:
             app_state.update_latency(latency)
 

@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>VPNGUARD Report</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 20mm;
+            @bottom-left {
+                content: "VPNGUARD • IPsec Security & Traffic Analysis";
+                font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                font-size: 8pt;
+                color: #94a3b8;
+            }
+            @bottom-right {
+                content: counter(page, decimal-leading-zero);
+                font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                font-size: 8pt;
+                color: #94a3b8;
+            }
+        }
+        @page cover {
+            background-color: #0F172A;
+            margin: 0;
+            @bottom-left { content: none; }
+            @bottom-right { content: none; }
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: #1e293b;
+            font-size: 10pt;
+            line-height: 1.5;
+        }
+
+        /* Helpers */
+        .page-break {
+            page-break-before: always;
+        }
+        .text-cyan { color: #14b8a6; }
+        .text-emerald { color: #10b981; }
+        .text-slate { color: #64748b; }
+        .text-navy { color: #0F172A; }
+
+        /* Page 1: Cover */
+        .cover {
+            page: cover;
+            color: white;
+            padding: 20mm;
+            height: 297mm;
+            box-sizing: border-box;
+            position: relative;
+        }
+        .cover-badge {
+            background: #14b8a6;
+            color: #0F172A;
+            font-size: 8pt;
+            font-weight: bold;
+            padding: 4px 12px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-bottom: 30px;
+            margin-top: 100px;
+        }
+        .cover-title {
+            font-size: 32pt;
+            font-weight: bold;
+            line-height: 1.1;
+            margin: 0 0 20px 0;
+        }
+        .cover-subtitle {
+            font-size: 11pt;
+            color: #94a3b8;
+            margin: 0 0 40px 0;
+        }
+        .cover-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 50px;
+            border: 1px solid #1e293b;
+        }
+        .cover-table th {
+            text-align: left;
+            padding: 10px 15px;
+            background: #1e293b;
+            color: #94a3b8;
+            font-size: 8pt;
+            font-weight: bold;
+        }
+        .cover-table td {
+            padding: 15px;
+            font-size: 12pt;
+            font-weight: bold;
+        }
+        .cover-table tr.sub-row td {
+            padding: 10px 15px 15px 15px;
+            font-size: 10pt;
+            font-weight: normal;
+            color: #94a3b8;
+            border-top: 1px solid #1e293b;
+        }
+        .cover-readout {
+            margin-top: 50px;
+            font-size: 11pt;
+            line-height: 1.6;
+            color: #cbd5e1;
+        }
+        .cover-footer {
+            position: absolute;
+            bottom: 20mm;
+            left: 20mm;
+            font-size: 8pt;
+            color: #64748b;
+        }
+
+        /* Inner Pages */
+        .page-header {
+            margin-bottom: 30px;
+        }
+        .page-header h3 {
+            color: #14b8a6;
+            font-size: 10pt;
+            margin: 0 0 5px 0;
+        }
+        .page-header h1 {
+            color: #0F172A;
+            font-size: 24pt;
+            margin: 0 0 5px 0;
+        }
+        .page-header p {
+            color: #64748b;
+            margin: 0;
+        }
+
+        /* Tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            font-size: 9.5pt;
+        }
+        .data-table th {
+            text-align: left;
+            padding: 10px;
+            background: #0F172A;
+            color: white;
+            font-weight: normal;
+        }
+        .data-table td {
+            padding: 10px;
+            border-bottom: 1px solid #e2e8f0;
+            color: #1e293b;
+        }
+
+        /* Callout Boxes */
+        .callout {
+            background: #f1f5f9;
+            padding: 15px;
+            border-left: 4px solid #3b82f6;
+            margin-bottom: 30px;
+        }
+        .callout-warning { border-left-color: #f59e0b; background: #fffbeb; }
+        .callout-success { border-left-color: #10b981; background: #ecfdf5; }
+        
+        .callout h4 { margin: 0 0 5px 0; font-size: 10pt; color: #0F172A; }
+        .callout p { margin: 0; font-size: 9.5pt; color: #475569; line-height: 1.5; }
+
+        /* Stat Boxes */
+        .stat-grid {
+            display: table;
+            width: 100%;
+            margin-bottom: 30px;
+            border: 1px solid #e2e8f0;
+        }
+        .stat-box {
+            display: table-cell;
+            width: 25%;
+            padding: 15px;
+            border-right: 1px solid #e2e8f0;
+            border-left: 4px solid #14b8a6;
+        }
+        .stat-box:last-child { border-right: none; }
+        .stat-label { font-size: 8pt; color: #64748b; text-transform: uppercase; margin-bottom: 5px; font-weight: bold; }
+        .stat-val { font-size: 16pt; font-weight: bold; color: #10b981; margin-bottom: 3px; }
+        .stat-sub { font-size: 8pt; color: #94a3b8; }
+        .stat-box.blue .stat-val { color: #0F172A; border-left-color: #3b82f6; }
+        .stat-box.cyan { border-left-color: #14b8a6; }
+
+        /* Evidence Chain */
+        .chain { display: table; width: 100%; margin-bottom: 30px; border: 1px solid #e2e8f0; }
+        .chain-item { display: table-cell; padding: 15px; border-right: 1px solid #e2e8f0; width: 20%; }
+        .chain-item:last-child { border-right: none; }
+        .chain-num { font-weight: bold; font-size: 11pt; margin-bottom: 5px; }
+        .chain-desc { color: #64748b; font-size: 10pt; }
+
+        pre {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 4px;
+            font-size: 8pt;
+            font-family: monospace;
+            white-space: pre-wrap;
+            color: #334155;
+            border: 1px solid #e2e8f0;
+        }
+    </style>
+</head>
+<body>
+
+<!-- PAGE 1: COVER -->
+<div class="cover">
+    <div class="cover-badge">SECURITY</div>
+    <div class="cover-title">VPNGUARD<br>IPsec Security &<br>Traffic Analysis Report</div>
+    <div class="cover-subtitle">
+        SECURITY ASSESSMENT / ENCRYPTED TRAFFIC INTELLIGENCE<br>
+        A forensic-style analysis of protocol visibility, security posture, and encrypted traffic behavior.
+    </div>
+
+    <table class="cover-table">
+        <thead>
+            <tr>
+                <th>ANALYSIS ID</th>
+                <th>ANALYSIS MODE</th>
+                <th>OVERALL RISK</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{ report_id }}</td>
+                <td>OFFLINE</td>
+                <td style="color: {{ '#10b981' if risk_level == 'LOW' else '#f59e0b' if risk_level == 'MEDIUM' else '#ef4444' }};">
+                    {{ risk_level | default('LOW') }}
+                </td>
+            </tr>
+            <tr class="sub-row">
+                <td>{{ started_at[:10] if started_at else 'N/A' }}</td>
+                <td>{{ total_packets | default(0) }} packets</td>
+                <td>{{ overall_sec }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="cover-readout">
+        <strong>EXECUTIVE READOUT</strong><br><br>
+        {% if ike %}
+        IKE negotiation was observed in the capture alongside ESP. The cryptographic algorithms ({{ ike.encryption_algorithm }}) were successfully verified.
+        {% else %}
+        ESP was observed, but IKE negotiation was not present in the capture. The report therefore avoids claiming a specific ESP encryption algorithm.
+        {% endif %}
+        
+        The statistical Random Forest estimated <strong>{{ ml.traffic_type | title }}</strong> with <strong>{{ (ml.confidence * 100) | round(1) }}%</strong> confidence. 
+        
+        {% if rules %}
+        Cryptographic vulnerabilities were detected during the analysis.
+        {% else %}
+        No cryptographic vulnerability was reported for the observable evidence.
+        {% endif %}
+    </div>
+
+    <div class="cover-footer">
+        Advanced Engine v1.0 • Technical Assessment • Confidential
+    </div>
+</div>
+
+<!-- PAGE 2: EXECUTIVE OVERVIEW -->
+<div class="page-break"></div>
+<div class="page-header">
+    <h3>01</h3>
+    <h1>Executive Overview</h1>
+    <p>The reviewer should understand the outcome in under 20 seconds.</p>
+</div>
+
+<div class="stat-grid">
+    <div class="stat-box cyan">
+        <div class="stat-label">SECURITY</div>
+        <div class="stat-val" style="color: {{ '#10b981' if risk_level == 'LOW' else '#ef4444' }}">{{ "SECURE" if risk_level == 'LOW' else "VULNERABLE" }}</div>
+        <div class="stat-sub">Overall assessment</div>
+    </div>
+    <div class="stat-box cyan">
+        <div class="stat-label">RISK</div>
+        <div class="stat-val" style="color: {{ '#10b981' if risk_level == 'LOW' else '#f59e0b' if risk_level == 'MEDIUM' else '#ef4444' }}">{{ risk_level | default('LOW') }}</div>
+        <div class="stat-sub">Reported risk</div>
+    </div>
+    <div class="stat-box blue">
+        <div class="stat-label">ESP</div>
+        <div class="stat-val">{{ total_packets | default(0) }}</div>
+        <div class="stat-sub">Packets analyzed</div>
+    </div>
+    <div class="stat-box blue">
+        <div class="stat-label">ML</div>
+        <div class="stat-val">{{ (ml.confidence * 100) | round(1) }}%</div>
+        <div class="stat-sub">{{ ml.traffic_type | title }} confidence</div>
+    </div>
+</div>
+
+<h3>Signal / evidence / conclusion</h3>
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Signal</th>
+            <th>Observed state</th>
+            <th>What it means</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>IPsec</td>
+            <td>DETECTED</td>
+            <td>IPsec traffic is present.</td>
+        </tr>
+        <tr>
+            <td>IKE</td>
+            <td>{{ "DETECTED" if ike else "NOT OBSERVED" }}</td>
+            <td>{{ "Handshake was successfully captured." if ike else "No handshake was captured in this session." }}</td>
+        </tr>
+        <tr>
+            <td>ESP</td>
+            <td>DETECTED</td>
+            <td>Encrypted payload transport observed via IP protocol 50.</td>
+        </tr>
+        <tr>
+            <td>ESP cipher</td>
+            <td>{{ ike.encryption_algorithm if ike else "NOT DETERMINED" }}</td>
+            <td>{{ "Cipher identified from IKE SA." if ike else "Insufficient negotiation evidence in this capture." }}</td>
+        </tr>
+        <tr>
+            <td>Rule engine</td>
+            <td>{{ rules|length if rules else '0' }} findings</td>
+            <td>{{ "Vulnerabilities reported." if rules else "No cryptographic vulnerability reported from observable evidence." }}</td>
+        </tr>
+        <tr>
+            <td>ML classifier</td>
+            <td>{{ ml.traffic_type | upper }}</td>
+            <td>Probabilistic statistical estimate; {{ (ml.confidence * 100) | round(1) }}% confidence.</td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="callout callout-warning">
+    <h4>Evidence boundary</h4>
+    <p>A missing IKE handshake is not the same as a secure handshake. This report deliberately distinguishes <strong>not observed</strong> from <strong>securely verified</strong>.</p>
+</div>
+
+<!-- PAGE 3: CAPTURE EVIDENCE -->
+<div class="page-break"></div>
+<div class="page-header">
+    <h3>02</h3>
+    <h1>Capture & Protocol Evidence</h1>
+    <p>Traceable metadata first; interpretation second.</p>
+</div>
+
+<h3>Capture metadata</h3>
+<table class="data-table">
+    <tbody>
+        <tr>
+            <td style="width: 30%; font-weight: bold;">Analysis ID</td>
+            <td>{{ report_id }}</td>
+        </tr>
+        <tr>
+            <td style="font-weight: bold;">Mode</td>
+            <td>Offline Analysis</td>
+        </tr>
+        <tr>
+            <td style="font-weight: bold;">Capture start</td>
+            <td>{{ started_at }}</td>
+        </tr>
+        <tr>
+            <td style="font-weight: bold;">Capture end</td>
+            <td>{{ ended_at or "Active" }}</td>
+        </tr>
+        <tr>
+            <td style="font-weight: bold;">Packets</td>
+            <td>{{ total_packets | default(0) }}</td>
+        </tr>
+        <tr>
+            <td style="font-weight: bold;">Analyzer</td>
+            <td>VPNGUARD Advanced Engine v1.0</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3>Protocol matrix</h3>
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Layer</th>
+            <th>Status</th>
+            <th>Evidence</th>
+            <th>Confidence</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>IPsec</td>
+            <td>Detected</td>
+            <td>IPsec traffic observed</td>
+            <td>High</td>
+        </tr>
+        <tr>
+            <td>IKE</td>
+            <td>{{ "Detected" if ike else "Not observed" }}</td>
+            <td>{{ "IKE handshake present" if ike else "No IKE handshake in capture" }}</td>
+            <td>High</td>
+        </tr>
+        <tr>
+            <td>ESP</td>
+            <td>Detected</td>
+            <td>IP protocol 50</td>
+            <td>High</td>
+        </tr>
+        <tr>
+            <td>Encryption</td>
+            <td>{{ ike.encryption_algorithm if ike else "Not determined" }}</td>
+            <td>{{ "Negotiated via IKE" if ike else "Negotiation data absent" }}</td>
+            <td>High</td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="callout">
+    <h4>What the capture proves</h4>
+    <p><strong>Forensic interpretation</strong><br>
+    The capture supports a high-confidence statement that ESP traffic was observed. 
+    {% if ike %}
+    The capture also contains the IKE handshake, allowing absolute confidence in the negotiated cipher suite.
+    {% else %}
+    It does not support a high-confidence statement about the negotiated ESP cipher because the IKE exchange is absent.
+    {% endif %}
+    </p>
+</div>
+
+<p style="font-weight: bold; margin-bottom: 5px;">Recommended capture practice</p>
+<p style="color: #475569;">For a complete cryptographic assessment, capture from the moment tunnel negotiation begins through establishment and subsequent ESP data exchange. This keeps protocol identification, cryptographic assessment, and encrypted-traffic classification traceable to the same evidence set.</p>
+
+<!-- PAGE 4: SECURITY ASSESSMENT -->
+<div class="page-break"></div>
+<div class="page-header">
+    <h3>03</h3>
+    <h1>Security Assessment</h1>
+    <p>The security verdict is rule-based, deterministic, and separate from ML.</p>
+</div>
+
+{% if rules %}
+<div class="callout" style="border-left-color: #ef4444; background: #fef2f2;">
+    <h4 style="color: #991b1b; display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 18pt;">⚠</span> CRYPTOGRAPHIC VULNERABILITIES DETECTED
+    </h4>
+    <p style="color: #7f1d1d;">The rule engine flagged {{ rules|length }} insecure configurations based on observable parameters.</p>
+</div>
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Issue</th>
+            <th>Severity</th>
+            <th>Detail</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for key, val in rules.items() %}
+        <tr>
+            <td style="font-weight: bold;">{{ key.replace('_', ' ') | title }}</td>
+            <td style="color: {{ '#ef4444' if val.severity == 'HIGH' else '#f59e0b' }}; font-weight: bold;">{{ val.severity }}</td>
+            <td>{{ val.detail }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="callout callout-success">
+    <h4 style="color: #065f46; display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 18pt;">✓</span> NO CRYPTOGRAPHIC VULNERABILITIES DETECTED
+    </h4>
+    <p style="color: #064e3b;">No cryptographic findings were reported for the evidence available to the rule engine.</p>
+</div>
+{% endif %}
+
+<h3>Assessment architecture</h3>
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Engine</th>
+            <th>Type</th>
+            <th>Input</th>
+            <th>Primary output</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Rule engine</td>
+            <td>Deterministic</td>
+            <td>Observable protocol / crypto parameters</td>
+            <td>Security findings</td>
+        </tr>
+        <tr>
+            <td>ML engine</td>
+            <td>Probabilistic</td>
+            <td>Encrypted traffic statistics</td>
+            <td>Traffic class</td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="callout">
+    <h4>Verdict wording</h4>
+    <p><strong>Recommended language</strong><br>
+    {% if rules %}
+    Cryptographic vulnerabilities were detected. The parameters observed violate established security policies.
+    {% else %}
+    No cryptographic vulnerabilities were detected in the observable evidence. 
+    {% if not ike %}IKE negotiation was not captured, so some cryptographic parameters could not be independently verified.{% endif %}
+    {% endif %}
+    </p>
+</div>
+
+<p style="font-weight: bold; margin-bottom: 5px;">Why this separation matters</p>
+<p style="color: #475569;">The ML model should never be the authority for cryptographic security. Likewise, secure cryptography does not reveal the application carried inside the encrypted tunnel. Keeping the outputs separate makes the report easier to defend.</p>
+
+<!-- PAGE 5: ML INTELLIGENCE -->
+<div class="page-break"></div>
+<div class="page-header">
+    <h3>04</h3>
+    <h1>Encrypted Traffic Intelligence</h1>
+    <p>Seven statistical flow features feed a Random Forest without payload inspection.</p>
+</div>
+
+<div class="stat-grid">
+    <div class="stat-box blue">
+        <div class="stat-label">PREDICTED CLASS</div>
+        <div class="stat-val">{{ ml.traffic_type | upper }}</div>
+        <div class="stat-sub">Model estimate</div>
+    </div>
+    <div class="stat-box cyan">
+        <div class="stat-label">CONFIDENCE</div>
+        <div class="stat-val">{{ (ml.confidence * 100) | round(1) }}%</div>
+        <div class="stat-sub">Probability score</div>
+    </div>
+    <div class="stat-box blue">
+        <div class="stat-label">MODEL</div>
+        <div class="stat-val">RANDOM FOREST</div>
+        <div class="stat-sub">Statistical extraction</div>
+    </div>
+</div>
+
+<div class="callout">
+    <h4>Interpretation</h4>
+    <p>VPNGUARD estimates <strong>{{ ml.traffic_type | title }}</strong>; the {{ (ml.confidence * 100) | round(1) }}% confidence indicates a weak-to-moderate classification signal and should not be presented as definitive application identification.</p>
+</div>
+
+<h3>Seven-feature model input</h3>
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Feature</th>
+            <th>Human-readable</th>
+            <th>Model value</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Duration</td>
+            <td>{{ (esp_features.duration / 1000000)|round(2) }} s</td>
+            <td>{{ '{:,.2f}'.format(esp_features.duration) }} µs</td>
+        </tr>
+        <tr>
+            <td>Packets / second</td>
+            <td>{{ esp_features.flowPktsPerSecond }} pkt/s</td>
+            <td>{{ esp_features.flowPktsPerSecond }}</td>
+        </tr>
+        <tr>
+            <td>Bytes / second</td>
+            <td>{{ esp_features.flowBytesPerSecond }} B/s</td>
+            <td>{{ esp_features.flowBytesPerSecond }} B/s</td>
+        </tr>
+        <tr>
+            <td>Mean IAT</td>
+            <td>{{ (esp_features.mean_flowiat / 1000)|round(2) }} ms</td>
+            <td>{{ '{:,.2f}'.format(esp_features.mean_flowiat) }} µs</td>
+        </tr>
+        <tr>
+            <td>Std IAT</td>
+            <td>{{ (esp_features.std_flowiat / 1000)|round(2) }} ms</td>
+            <td>{{ '{:,.2f}'.format(esp_features.std_flowiat) }} µs</td>
+        </tr>
+        <tr>
+            <td>Min IAT</td>
+            <td>{{ (esp_features.min_flowiat / 1000)|round(2) }} ms</td>
+            <td>{{ '{:,.2f}'.format(esp_features.min_flowiat) }} µs</td>
+        </tr>
+        <tr>
+            <td>Max IAT</td>
+            <td>{{ (esp_features.max_flowiat / 1000)|round(2) }} ms</td>
+            <td>{{ '{:,.2f}'.format(esp_features.max_flowiat) }} µs</td>
+        </tr>
+    </tbody>
+</table>
+<p style="font-size: 8pt; color: #94a3b8; text-transform: uppercase;">Payload inspection: NOT PERFORMED • Basis: encrypted metadata and statistical behavior only</p>
+
+<!-- PAGE 6: LIMITATIONS -->
+<div class="page-break"></div>
+<div class="page-header">
+    <h3>05</h3>
+    <h1>Limitations & Evidence Discipline</h1>
+    <p>A professional security report is explicit about uncertainty.</p>
+</div>
+
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Area</th>
+            <th>Boundary</th>
+            <th>Reporting consequence</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td style="font-weight: bold;">ML</td>
+            <td>Probabilistic; assumes baseline behavior</td>
+            <td>Classifications are estimates, not proofs.</td>
+        </tr>
+        <tr>
+            <td style="font-weight: bold;">Evasion</td>
+            <td>Padding / behavior changes can alter statistics</td>
+            <td>Model outputs can shift under adversarial traffic.</td>
+        </tr>
+        <tr>
+            <td style="font-weight: bold;">Handshake</td>
+            <td>Security parameters depend on observed negotiation</td>
+            <td>Missing IKE limits crypto verification.</td>
+        </tr>
+        <tr>
+            <td style="font-weight: bold;">Live capture</td>
+            <td>Depends on interface visibility</td>
+            <td>Invisible traffic cannot be analyzed.</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3>Evidence chain</h3>
+<div class="chain">
+    <div class="chain-item"><div class="chain-num">01</div><div class="chain-desc">Capture</div></div>
+    <div class="chain-item"><div class="chain-num">02</div><div class="chain-desc">Protocol</div></div>
+    <div class="chain-item"><div class="chain-num">03</div><div class="chain-desc">Rules</div></div>
+    <div class="chain-item"><div class="chain-num">04</div><div class="chain-desc">ML</div></div>
+    <div class="chain-item"><div class="chain-num">05</div><div class="chain-desc">Report</div></div>
+</div>
+
+<div class="callout callout-success">
+    <h4>Presentation conclusion</h4>
+    <p><strong>What this report can defend</strong><br>
+    ESP was observed and seven flow-statistical features were extracted. The classifier estimated {{ ml.traffic_type | title }} at {{ (ml.confidence * 100) | round(1) }}% confidence. 
+    {% if not ike %}Because IKE was not present, the report does not claim a specific ESP cipher.{% endif %}
+    </p>
+</div>
+
+<!-- PAGE 7: TECHNICAL APPENDIX -->
+<div class="page-break"></div>
+<div class="page-header">
+    <h3>06</h3>
+    <h1>Technical Appendix</h1>
+    <p>Machine-readable telemetry retained for reproducibility and engineering validation.</p>
+</div>
+
+<pre>{{ raw_json }}</pre>
+
+<h3>Report information architecture</h3>
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Layer</th>
+            <th>Purpose</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Executive</td>
+            <td>Fast understanding of security state, risk, and classification.</td>
+        </tr>
+        <tr>
+            <td>Evidence</td>
+            <td>Protocol and capture facts with explicit uncertainty.</td>
+        </tr>
+        <tr>
+            <td>Assessment</td>
+            <td>Deterministic security findings and their boundaries.</td>
+        </tr>
+        <tr>
+            <td>Intelligence</td>
+            <td>ML prediction, confidence, and seven statistical features.</td>
+        </tr>
+        <tr>
+            <td>Engineering</td>
+            <td>Raw telemetry for reproducibility and debugging.</td>
+        </tr>
+    </tbody>
+</table>
+
+</body>
+</html>

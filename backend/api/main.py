@@ -45,7 +45,7 @@ app = FastAPI(title="VPN Analyzer", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:*"],  # Electron only
+    allow_origins=["*"],  # Allow all for local daemon
     allow_methods=["GET", "POST", "PATCH"],
     allow_headers=["*"],
 )

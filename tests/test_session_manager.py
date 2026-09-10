@@ -26,20 +26,16 @@ def test_rolling_buffer_and_session_start():
     pkt = IP(dst="1.1.1.1")/UDP(sport=500, dport=500)/Raw(b"IKEv2")
     _process_packet(pkt)
     
-    assert app_state.get_state() == VpnState.VPN_DETECTED
-    assert len(_rolling_buffer) == 1
-    
-    # 2. Add another packet (user hasn't clicked start yet)
-    pkt2 = IP(dst="1.1.1.1")/UDP(sport=500, dport=500)/Raw(b"IKEv2_AUTH")
-    _process_packet(pkt2)
-    assert len(_rolling_buffer) == 2
-    
-    # 3. Start Session via API
-    response = client.post("/sessions")
-    assert response.status_code == 200
     assert app_state.get_state() == VpnState.ANALYZING
     
-    # 4. Verify buffer flushed to queue
+    # 2. Add another packet
+    pkt2 = IP(dst="1.1.1.1")/UDP(sport=500, dport=500)/Raw(b"ESP")
+    _process_packet(pkt2)
+    
+    # The queue should now have the initial packet and the new packet
+    assert packet_queue.qsize() == 2
+    # 3. Verify buffer flushed to queue
+    assert app_state.get_state() == VpnState.ANALYZING
     assert len(_rolling_buffer) == 0
     assert packet_queue.qsize() == 2
     

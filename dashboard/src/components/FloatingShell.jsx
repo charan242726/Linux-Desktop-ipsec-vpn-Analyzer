@@ -10,10 +10,10 @@ import {
   Bell,
   CheckCircle2,
   Lock,
-  Globe2,
   Minus,
   Square,
-  X
+  X,
+  Download
 } from 'lucide-react';
 
 export const FloatingShell = ({ 
@@ -29,7 +29,7 @@ export const FloatingShell = ({
   const [notificationOpen, setNotificationOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#040711] text-slate-100 p-3 sm:p-5 md:p-6 lg:p-7 relative overflow-hidden flex flex-col justify-between">
+    <div className="min-h-screen bg-[#040711] text-slate-100 p-[3px] relative overflow-hidden flex flex-col justify-between">
       {/* Ambient background glow orbs - Blue Theme */}
       <div className="ambient-glow-container">
         <div className="ambient-orb-1" />
@@ -45,8 +45,8 @@ export const FloatingShell = ({
           className="specular-bar px-5 py-3.5 flex flex-wrap items-center justify-between gap-4 z-20"
           style={{ WebkitAppRegion: 'drag' }}
         >
-          {/* Brand & Connection Matrix Title */}
-          <div className="flex items-center gap-3.5" style={{ WebkitAppRegion: 'no-drag' }}>
+          {/* Brand */}
+          <div className="flex items-center gap-3" style={{ WebkitAppRegion: 'no-drag' }}>
             <div className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600/30 to-cyan-500/20 border border-cyan-400/40 shadow-[0_0_20px_rgba(0,210,255,0.25)]">
               <ShieldCheck className="w-5 h-5 text-cyan-400" />
               <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
@@ -54,21 +54,11 @@ export const FloatingShell = ({
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-400"></span>
               </span>
             </div>
-            
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-sm font-semibold tracking-tight text-white font-mono">
-                  AERO-VPN <span className="text-cyan-400">//</span> TELEMETRY
-                </h1>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-medium bg-cyan-500/15 text-cyan-300 border border-cyan-400/30">
-                  v4.2.8-PROD
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400 flex items-center gap-1.5 font-mono">
-                <Globe2 className="w-3 h-3 text-cyan-500/70" /> IPsec Gateway Cluster • Frankfurt-01-EHR
-              </p>
-            </div>
+            <h1 className="text-sm font-bold tracking-tight font-mono">
+              VPN<span className="text-cyan-400">GUARD</span>
+            </h1>
           </div>
+
 
           {/* Quick System Telemetry Pills & Global Search */}
           <div className="flex items-center gap-3" style={{ WebkitAppRegion: 'no-drag' }}>
@@ -98,6 +88,16 @@ export const FloatingShell = ({
               <Activity className="w-3.5 h-3.5 text-cyan-400" />
               <span>AGGREGATE {totalBandwidth} GB/S</span>
             </div>
+
+            {/* Download Latest Report Button */}
+            <button 
+              onClick={() => window.open('http://localhost:8000/reports/latest/pdf', '_blank')}
+              className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-cyan-500/10 border border-cyan-400/30 text-xs font-mono text-cyan-300 hover:bg-cyan-400 hover:text-slate-900 transition-all font-semibold shadow-[0_0_10px_rgba(0,210,255,0.1)]"
+              title="Download the most recent forensic report"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>DOWNLOAD LATEST</span>
+            </button>
 
             {/* Notifications Button */}
             <div className="relative">

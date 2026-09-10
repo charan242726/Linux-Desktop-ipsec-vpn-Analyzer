@@ -32,3 +32,16 @@ def get_status():
         "state": app_state.get_state(),
         "session_id": app_state.get_session()
     }
+
+import subprocess
+import os
+
+@router.post("/simulate")
+def simulate_traffic():
+    # Trigger docker-compose up -d to spawn alice/bob VPN nodes
+    try:
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
+        subprocess.Popen(["docker-compose", "up", "-d"], cwd=project_root)
+        return {"status": "success", "message": "Simulation started"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}

@@ -29,7 +29,15 @@ def classify_traffic(features: dict) -> dict:
         }
     try:
         import pandas as pd
-        df = pd.DataFrame([features])
+        
+        # ISCX Model exactly expects these 7 features
+        expected = [
+            'duration', 'flowPktsPerSecond', 'flowBytesPerSecond', 
+            'mean_flowiat', 'std_flowiat', 'min_flowiat', 'max_flowiat'
+        ]
+        filtered = {k: features.get(k, 0) for k in expected}
+        
+        df = pd.DataFrame([filtered])
         prediction = _model.predict(df)[0]
         confidence = float(max(_model.predict_proba(df)[0]))
         return {

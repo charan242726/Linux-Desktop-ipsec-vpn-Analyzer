@@ -60,10 +60,21 @@ def _process_packet(packet):
         return  # ignore non-VPN traffic
 
     if state == VpnState.IDLE:
+        from backend.database.db import create_session
+        session_id = create_session()
+        app_state.set_session(session_id)
+        
         with _buffer_lock:
             _rolling_buffer.append(packet)
-        app_state.set_state(VpnState.VPN_DETECTED)
-        logger.info("VPN traffic detected")
+            buffered = list(_rolling_buffer)
+            _rolling_buffer.clear()
+            
+        for pkt in buffered:
+            if not packet_queue.full():
+                packet_queue.put(pkt)
+                
+        app_state.set_state(VpnState.ANALYZING)
+        logger.info("VPN traffic detected — Auto-started analysis")
 
     elif state == VpnState.VPN_DETECTED:
         with _buffer_lock:
@@ -108,6 +119,7 @@ def run_capture():
         while not stop_event.is_set():
             app_state.update_capture_heartbeat()
             sniff(
+                iface="br-vpnguard",
                 filter=CAPTURE_FILTER,
                 prn=_process_packet,
                 store=False,

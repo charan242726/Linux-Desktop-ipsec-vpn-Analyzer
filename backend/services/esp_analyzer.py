@@ -17,6 +17,8 @@ def extract_esp_features(packets: list) -> dict:
     timestamps = []
     directions_fwd = 0
     directions_bwd = 0
+    forward_esp_bytes = 0
+    reverse_esp_bytes = 0
     first_src = None
 
     from backend.services.ike_parser import classify_vpn_packet
@@ -43,8 +45,10 @@ def extract_esp_features(packets: list) -> dict:
                 first_src = src
             if src == first_src:
                 directions_fwd += 1
+                forward_esp_bytes += size
             else:
                 directions_bwd += 1
+                reverse_esp_bytes += size
 
         except Exception as e:
             logger.debug(f"ESP packet feature error: {e}")
@@ -60,37 +64,33 @@ def extract_esp_features(packets: list) -> dict:
         if diff >= 0:
             inter_arrivals.append(diff)
 
-    flow_duration = (timestamps[-1] - timestamps[0]) if len(timestamps) > 1 else 0
+    # Convert timestamps to microseconds to match ISCX dataset
+    flow_duration_us = (timestamps[-1] - timestamps[0]) * 1000000 if len(timestamps) > 1 else 0
     total_bytes = sum(sizes)
     n = len(sizes)
 
-    avg_size = total_bytes / n
-    min_size = min(sizes)
-    max_size = max(sizes)
-    std_size = _std(sizes, avg_size)
+    # Duration in seconds for rates
+    flow_duration_sec = flow_duration_us / 1000000.0 if flow_duration_us > 0 else 0.001
+    
+    flowPktsPerSecond = n / flow_duration_sec
+    flowBytesPerSecond = total_bytes / flow_duration_sec
 
-    avg_iat = sum(inter_arrivals) / len(inter_arrivals) if inter_arrivals else 0
-    std_iat = _std(inter_arrivals, avg_iat) if inter_arrivals else 0
-
-    bps = total_bytes / flow_duration if flow_duration > 0 else 0
-    pps = n / flow_duration if flow_duration > 0 else 0
+    # IAT in microseconds
+    iats_us = [x * 1000000 for x in inter_arrivals]
+    avg_iat = sum(iats_us) / len(iats_us) if iats_us else 0
+    std_iat = _std(iats_us, avg_iat) if iats_us else 0
+    min_iat = min(iats_us) if iats_us else 0
+    max_iat = max(iats_us) if iats_us else 0
 
     return {
-        # These keys must match your training feature columns exactly
-        "flow_duration":         round(flow_duration, 4),
-        "total_packets":         n,
-        "total_bytes":           total_bytes,
-        "avg_packet_size":       round(avg_size, 2),
-        "min_packet_size":       min_size,
-        "max_packet_size":       max_size,
-        "std_packet_size":       round(std_size, 2),
-        "avg_inter_arrival_ms":  round(avg_iat * 1000, 2),
-        "std_inter_arrival_ms":  round(std_iat * 1000, 2),
-        "bytes_per_second":      round(bps, 2),
-        "packets_per_second":    round(pps, 2),
-        "fwd_packets":           directions_fwd,
-        "bwd_packets":           directions_bwd,
-        "fwd_bwd_ratio":         round(directions_fwd / n, 3),
+        "duration":           round(flow_duration_us, 2),
+        "flowPktsPerSecond":  round(flowPktsPerSecond, 2),
+        "flowBytesPerSecond": round(flowBytesPerSecond, 2),
+        "mean_flowiat":       round(avg_iat, 2),
+        "std_flowiat":        round(std_iat, 2),
+        "min_flowiat":        round(min_iat, 2),
+        "max_flowiat":        round(max_iat, 2),
+        "esp_packet_count":   n  # Kept for frontend dashboard display
     }
 
 
@@ -102,10 +102,13 @@ def _std(values: list, mean: float) -> float:
 
 
 def _empty_features() -> dict:
-    return {k: 0 for k in [
-        "flow_duration", "total_packets", "total_bytes",
-        "avg_packet_size", "min_packet_size", "max_packet_size",
-        "std_packet_size", "avg_inter_arrival_ms", "std_inter_arrival_ms",
-        "bytes_per_second", "packets_per_second",
-        "fwd_packets", "bwd_packets", "fwd_bwd_ratio"
-    ]}
+    return {
+        "duration": 0,
+        "flowPktsPerSecond": 0,
+        "flowBytesPerSecond": 0,
+        "mean_flowiat": 0,
+        "std_flowiat": 0,
+        "min_flowiat": 0,
+        "max_flowiat": 0,
+        "esp_packet_count": 0
+    }

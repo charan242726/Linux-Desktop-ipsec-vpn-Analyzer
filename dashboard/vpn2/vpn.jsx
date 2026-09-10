@@ -5,6 +5,7 @@ import { HeroMetricsGrid } from '../src/components/HeroMetricsGrid';
 import { TelemetryChartsSection } from '../src/components/TelemetryChartsSection';
 import { TunnelDataStreamTable } from '../src/components/TunnelDataStreamTable';
 import { TunnelDetailModal } from '../src/components/TunnelDetailModal';
+import { ReportHistory } from '../src/components/ReportHistory';
 import { 
   Terminal, 
   Radio,
@@ -78,9 +79,13 @@ export default function VpnDashboard() {
             }
           }
           
+          // Only auto-update the stream toggle if the backend state transitioned
+          if (state !== prevStateRef.current) {
+            setIsLiveStream(state === 'ANALYZING' || state === 'VPN_DETECTED');
+          }
+          
           prevStateRef.current = state;
           setEngineState(state);
-          setIsLiveStream(state === 'ANALYZING' || state === 'VPN_DETECTED');
 
           // Bandwidth
           if (data.bandwidth) {
@@ -200,6 +205,10 @@ export default function VpnDashboard() {
       <main className="flex-1 p-4 sm:p-5 md:p-6 overflow-y-auto max-h-[calc(100vh-140px)]">
         
         {/* Render View Based on Nav */}
+        {activeNav === 'reports' && (
+          <ReportHistory />
+        )}
+        
         {activeNav === 'dashboard' && (
           <div>
             <div className="mb-4 flex items-center justify-between p-4 rounded-xl border border-white/10 bg-black/40">

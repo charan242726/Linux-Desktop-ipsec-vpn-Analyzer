@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  alice:
+    image: ubuntu:24.04
+    container_name: vpn-alice
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    volumes:
+      - ./testbed/alice:/etc/ipsec.d
+    command: >
+      sh -c "apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y strongswan iputils-ping &&
+             cp /etc/ipsec.d/ipsec.conf /etc/ipsec.conf &&
+             cp /etc/ipsec.d/ipsec.secrets /etc/ipsec.secrets &&
+             ipsec start &&
+             sleep 3 &&
+             ipsec up myvpn &&
+             ping 10.0.0.20"
+    networks:
+      vpn_net:
+        ipv4_address: 10.0.0.10
+
+  bob:
+    image: ubuntu:24.04
+    container_name: vpn-bob
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    volumes:
+      - ./testbed/bob:/etc/ipsec.d
+    command: >
+      sh -c "apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y strongswan iputils-ping &&
+             cp /etc/ipsec.d/ipsec.conf /etc/ipsec.conf &&
+             cp /etc/ipsec.d/ipsec.secrets /etc/ipsec.secrets &&
+             ipsec start --nofork"
+    networks:
+      vpn_net:
+        ipv4_address: 10.0.0.20
+
+networks:
+  vpn_net:
+    name: vpnguard_test_net
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: br-vpnguard
+    ipam:
+      config:
+        - subnet: 10.0.0.0/24

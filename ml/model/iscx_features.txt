@@ -1,0 +1,7 @@
+duration
+flowPktsPerSecond
+flowBytesPerSecond
+mean_flowiat
+std_flowiat
+min_flowiat
+max_flowiat

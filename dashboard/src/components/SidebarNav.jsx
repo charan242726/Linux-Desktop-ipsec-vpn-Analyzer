@@ -5,8 +5,10 @@ import {
   Activity, 
   Globe, 
   ShieldAlert, 
-  FileText, 
-  Cpu,
+  Shield, 
+  Settings, 
+  Database,
+  FileText,
   Sparkles
 } from 'lucide-react';
 
@@ -15,6 +17,7 @@ export const SidebarNav = ({ activeNav, setActiveNav }) => {
   const navItems = [
     { id: 'dashboard', label: 'Telemetry Overview', icon: LayoutDashboard, badge: 'LIVE' },
     { id: 'tunnels', label: 'IPsec Tunnels', icon: Network, badge: '24' },
+    { id: 'reports', label: 'Report History', icon: FileText, badge: 'NEW' },
     { id: 'bandwidth', label: 'Throughput Stream', icon: Activity },
     { id: 'nodes', label: 'Global Edge Grid', icon: Globe },
     { id: 'security', label: 'Security & Ciphers', icon: ShieldAlert },
@@ -65,44 +68,6 @@ export const SidebarNav = ({ activeNav, setActiveNav }) => {
               );
             })}
           </nav>
-        </div>
-
-        {/* System Health Overview Card */}
-        <div className="mirror-card p-3.5 space-y-3 border border-white/10 bg-slate-900/40">
-          <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
-            <span className="flex items-center gap-1.5 text-slate-300 font-semibold">
-              <Cpu className="w-3.5 h-3.5 text-cyan-400" /> CLUSTER ENGINE
-            </span>
-            <span className="text-emerald-400 text-[10px]">99.99% UP</span>
-          </div>
-
-          {/* Progress Bar 1: Gateway Load */}
-          <div className="space-y-1">
-            <div className="flex justify-between text-[10px] font-mono text-slate-400">
-              <span>CPU Core Allocation</span>
-              <span className="text-slate-200">28.4%</span>
-            </div>
-            <div className="w-full bg-slate-900/80 h-1.5 rounded-full overflow-hidden p-0.5 border border-white/5">
-              <div className="bg-gradient-to-r from-blue-600 to-cyan-400 h-full rounded-full w-[28.4%]" />
-            </div>
-          </div>
-
-          {/* Progress Bar 2: Memory Buffers */}
-          <div className="space-y-1">
-            <div className="flex justify-between text-[10px] font-mono text-slate-400">
-              <span>Ring Buffer Usage</span>
-              <span className="text-slate-200">42.1%</span>
-            </div>
-            <div className="w-full bg-slate-900/80 h-1.5 rounded-full overflow-hidden p-0.5 border border-white/5">
-              <div className="bg-gradient-to-r from-blue-500 to-indigo-400 h-full rounded-full w-[42.1%]" />
-            </div>
-          </div>
-
-          {/* Encryption Quick Status */}
-          <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[10px] font-mono text-slate-400">
-            <span>Hardware Offload</span>
-            <span className="text-cyan-400 font-medium">AES-NI ENABLED</span>
-          </div>
         </div>
 
 

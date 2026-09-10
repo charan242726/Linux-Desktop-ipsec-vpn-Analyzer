@@ -189,9 +189,15 @@ export const FloatingShell = ({
           <div className="flex items-center gap-3 text-slate-400">
             <span>Ticks: <strong className="text-slate-200">{lastTickTime}</strong></span>
             <span className="text-slate-600">•</span>
-            <span className="text-emerald-400 flex items-center gap-1">
-              <CheckCircle2 className="w-3 h-3" /> FIPS 140-3 COMPLIANT
-            </span>
+            {ikeFindings?.encryption_algorithm === '3DES' || ikeFindings?.auth_algorithm === 'HMAC-SHA1' ? (
+              <span className="text-red-400 flex items-center gap-1">
+                <X className="w-3 h-3" /> NON-COMPLIANT CIPHER DETECTED
+              </span>
+            ) : (
+              <span className="text-emerald-400 flex items-center gap-1">
+                <CheckCircle2 className="w-3 h-3" /> FIPS 140-3 COMPLIANT
+              </span>
+            )}
           </div>
         </footer>
 

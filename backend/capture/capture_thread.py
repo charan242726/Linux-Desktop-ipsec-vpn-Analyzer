@@ -124,7 +124,6 @@ def run_capture():
                 filter=CAPTURE_FILTER,
                 prn=_process_packet,
                 store=False,
-                timeout=2,
                 stop_filter=lambda p: stop_event.is_set()
             )
     except PermissionError:

@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "electron:start": "cross-env NODE_ENV=development electron .",
     "electron:dev": "concurrently -k \"npm run dev\" \"wait-on tcp:5173 && npm run electron:start\"",
-    "start": "npm run electron:dev"
+    "start": "npm run electron:dev",
+    "start:prod": "cross-env NODE_ENV=production electron ."
   },
   "dependencies": {
     "autoprefixer": "^10.5.5",

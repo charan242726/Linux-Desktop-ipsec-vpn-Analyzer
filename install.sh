@@ -86,6 +86,10 @@ cd $PROJECT_DIR/dashboard
 # Run npm install as the standard user
 sudo -u $USERNAME npm install
 
+# Build the React production assets
+echo "🏗️ Compiling production assets..."
+sudo -u $USERNAME npm run build
+
 # 6. Create Desktop Shortcut
 echo "🖥️ Creating Desktop Application Shortcut..."
 DESKTOP_ENTRY_PATH="/usr/share/applications/vpnguard.desktop"
@@ -94,7 +98,7 @@ cat <<EOF > $DESKTOP_ENTRY_PATH
 [Desktop Entry]
 Name=VPNGUARD
 Comment=IPsec VPN Security Analyzer
-Exec=sh -c 'cd $PROJECT_DIR/dashboard && npm start'
+Exec=sh -c 'cd $PROJECT_DIR/dashboard && npm run start:prod'
 Icon=utilities-terminal
 Terminal=false
 Type=Application

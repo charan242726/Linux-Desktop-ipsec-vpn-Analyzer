@@ -26,7 +26,8 @@ export const FloatingShell = ({
   lastTickTime,
   activeTunnelCount,
   totalBandwidth,
-  mlFindings
+  mlFindings,
+  ikeFindings
 }) => {
   const [notificationOpen, setNotificationOpen] = useState(false);
 
@@ -182,7 +183,7 @@ export const FloatingShell = ({
               <Lock className="w-3 h-3 text-cyan-400" /> IPsec Encapsulation: ESP (Mode 50) + NAT-T
             </span>
             <span className="hidden md:inline text-slate-600">|</span>
-            <span className="hidden md:inline">Key Exchange: IKEv2 / Diffie-Hellman Group 19</span>
+            <span className="hidden md:inline">Key Exchange: IKEv2 / Diffie-Hellman {ikeFindings?.dh_group ? `Group ${ikeFindings.dh_group}` : 'Group 19'}</span>
           </div>
 
           <div className="flex items-center gap-3 text-slate-400">

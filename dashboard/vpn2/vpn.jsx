@@ -194,6 +194,7 @@ export default function VpnDashboard() {
       activeTunnelCount={tunnelCount}
       totalBandwidth={totalBandwidthGbps}
       mlFindings={backendFindings?.ml}
+      ikeFindings={backendFindings?.ike}
     >
       {/* Sidebar Navigation */}
       <SidebarNav

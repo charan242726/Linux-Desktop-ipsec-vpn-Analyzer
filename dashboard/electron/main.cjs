@@ -90,6 +90,10 @@ function createTray() {
   });
 }
 
+// Fix for Linux AppImage: Set a strict app name so the lock file is consistent
+// regardless of the random /tmp/.mount_XXXX path the AppImage runs from.
+app.name = 'vpnguard-analyzer';
+
 const gotTheLock = app.requestSingleInstanceLock();
 
 if (!gotTheLock) {

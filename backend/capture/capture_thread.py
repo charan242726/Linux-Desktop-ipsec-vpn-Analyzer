@@ -116,9 +116,11 @@ def run_capture():
     """Entry point for Thread 2. Blocks until stop_event is set."""
     logger.info("CaptureThread starting — requires admin/root privileges")
     try:
+        from backend.config import CAPTURE_IFACE
         while not stop_event.is_set():
             app_state.update_capture_heartbeat()
             sniff(
+                iface=CAPTURE_IFACE,
                 filter=CAPTURE_FILTER,
                 prn=_process_packet,
                 store=False,

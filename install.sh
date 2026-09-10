@@ -13,7 +13,7 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 echo "🚀 Starting VPNGUARD Installation..."
-PROJECT_DIR=$(pwd)
+PROJECT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
 USERNAME=${SUDO_USER:-$USER}
 
 # 2. Detect OS and install dependencies

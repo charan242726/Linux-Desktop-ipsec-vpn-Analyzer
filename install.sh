@@ -99,7 +99,7 @@ cat <<EOF > $DESKTOP_ENTRY_PATH
 Name=VPNGUARD
 Comment=IPsec VPN Security Analyzer
 Exec=sh -c 'cd $PROJECT_DIR/dashboard && npm run start:prod'
-Icon=utilities-terminal
+Icon=$PROJECT_DIR/dashboard/public/vpnguard-logo.png
 Terminal=false
 Type=Application
 Categories=System;Security;Network;

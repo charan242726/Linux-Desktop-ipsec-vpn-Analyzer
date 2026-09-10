@@ -14,6 +14,7 @@ function createWindow() {
     frame: false,
     show: false,
     backgroundColor: '#040711',
+    icon: path.join(__dirname, isDev ? '../public/vpnguard-logo.png' : '../dist/vpnguard-logo.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       nodeIntegration: false,
@@ -46,9 +47,9 @@ function createTray() {
   // Try to load a generic icon or a built icon
   let iconPath;
   if (isDev) {
-    iconPath = path.join(__dirname, '..', 'public', 'vite.svg');
+    iconPath = path.join(__dirname, '..', 'public', 'vpnguard-logo.png');
   } else {
-    iconPath = path.join(__dirname, '..', 'dist', 'vite.svg');
+    iconPath = path.join(__dirname, '..', 'dist', 'vpnguard-logo.png');
   }
   
   // Wrap in try-catch in case icon doesn't exist (Electron handles native empty icons usually)

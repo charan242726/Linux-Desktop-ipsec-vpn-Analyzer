@@ -12,9 +12,17 @@ def generate_professional_pdf(report: dict) -> bytes:
     findings_list = report.get('findings', [])
     latest_finding = findings_list[-1] if findings_list else {}
     
-    ike = latest_finding.get('ike', {})
+    # IKE parameters occur during the handshake (early batches)
+    ike = {}
+    rules = {}
+    for f in findings_list:
+        if f.get('ike'):
+            ike.update(f['ike'])
+        if f.get('security_rules'):
+            rules.update(f['security_rules'])
+            
+    # ML and ESP stats are most accurate in the final batch
     ml = latest_finding.get('ml', {})
-    rules = latest_finding.get('security_rules', {})
     esp_features = latest_finding.get('esp_features', {})
     
     crit_c, high_c, med_c, low_c = 0, 0, 0, 0
